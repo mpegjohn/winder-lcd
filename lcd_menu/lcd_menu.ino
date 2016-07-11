@@ -48,8 +48,6 @@ static const int rotorPinB = 3;	// the other quadrature pin
 RotaryEncoderAcelleration rotor;
 Button pushButton;
 
-
-
 void UpdateRotor() {
   rotor.update();
 }
@@ -150,7 +148,7 @@ void loop()
 {
 
 }
-int Mode;
+
 void lcdMainMenu() {
 
   rotor.setMinMax(0, startJob);
@@ -168,26 +166,33 @@ void lcdMainMenu() {
   lcdPrintCursor();
 }
 
-  // Decide which cursor position to clear based on the current menu
+// Decide which cursor position to clear based on the current menu
 void lcdPrintCursor() {
-  if (Mode==0) {
-    lcd.setCursor(0, 3);
+
+  // Clear all >
+  for(int i = 0; i < 4; i++) {
+    lcd.setCursor(0, i);
     lcd.print(" ");
   }
-  else if (Mode==0 ){
-    lcd.setCursor(0, 2);
-    lcd.print(" ");
+
+  // Display the > at the correct line
+  switch (gmenuMode) {
+    case setupJob:
+    {
+      lcd.setCursor(0, 0);
+      break;
+    }
+    case reviewJob:
+    {
+      lcd.setCursor(0, 1);
+      break;
+    }
+    case startJob:
+    {
+      lcd.setCursor(0, 2);
+      break;
+    }
   }
-  else if (Mode==0) {
-    lcd.setCursor(0,2);
-    lcd.print(" ");
-  }
-  else {
-    lcd.setCursor(0, Mode-1);
-    lcd.print(" ");
-  }
-  // Print cursor
-  lcd.setCursor(0, Mode);
   lcd.print(">");
 }
 
