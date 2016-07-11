@@ -54,7 +54,7 @@ void UpdateRotor() {
   rotor.update();
 }
 
-mainMenuMode gmenuMode = setup;
+mainMenuMode gmenuMode = setupJob;
 
 void setup()
 {
@@ -100,7 +100,6 @@ lcdMainMenu();
 
 void newJob()
 {
-
 	menuResult wireResult;
 	menuResult turnsResult;
 	menuResult spoolResult;
@@ -136,7 +135,7 @@ void calculateStackup(double wireSize, double bobbinLength, double turns)
 
 	int turnsPerLayer;
 
-	float fractional, integer;
+	double fractional, integer;
 
 	printf("Wire size = %g, bobbin = %g, turns = %g ", wireSize, bobbinLength, turns );
 
@@ -147,15 +146,14 @@ void calculateStackup(double wireSize, double bobbinLength, double turns)
 	fractional = modf(layers, &integer);
 }
 
-
-
 void loop()
 {
 
 }
+int Mode;
 void lcdMainMenu() {
 
-  rotor.setMinMax(0, start)
+  rotor.setMinMax(0, startJob);
   rotor.setPosition(0);
 
   lcd.clear();
@@ -165,23 +163,22 @@ void lcdMainMenu() {
   lcd.print("Review job");
   lcd.setCursor(1,2);
   lcd.print("Start");
-  Mode=0;
-  MenuID = 0;
+
   // Print out the cursor
   lcdPrintCursor();
 }
 
   // Decide which cursor position to clear based on the current menu
 void lcdPrintCursor() {
-  if (Mode==0 && MenuID==1) {
+  if (Mode==0) {
     lcd.setCursor(0, 3);
     lcd.print(" ");
   }
-  else if (Mode==0 && MenuID==0){
+  else if (Mode==0 ){
     lcd.setCursor(0, 2);
     lcd.print(" ");
   }
-  else if (Mode==0 && MenuID==3) {
+  else if (Mode==0) {
     lcd.setCursor(0,2);
     lcd.print(" ");
   }

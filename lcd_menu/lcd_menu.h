@@ -2,7 +2,7 @@
 
 
 enum mainMenuMode {
-  setup,
-  review,
-  start
+  setupJob,
+  reviewJob,
+  startJob
 };
