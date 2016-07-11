@@ -4,10 +4,12 @@
 
 // include the library code:
 #include <LiquidCrystal.h>
+#include <Wire.h>
 #include <Button.h>
 #include <TicksPerSecond.h>
 #include <RotaryEncoderAcelleration.h>
 #include <ValueMenu.h>
+#include <lcd_menu.h>
 
 
 #define LCD_D7 9
@@ -52,20 +54,49 @@ void UpdateRotor() {
   rotor.update();
 }
 
+mainMenuMode gmenuMode = setup;
 
 void setup()
 {
+  // setup LCD
   lcd.begin(LCD_COLS, LCD_ROWS);
+
+  // setup rotary encoder
   rotor.initialize(rotorPinA, rotorPinB);
+
+  // setup push button on encode
   pushButton.initialize(buttonPin);
+
+  // Setup Wire
+  Wire.begin();
+
+  // setup interupt for encoder
   attachInterrupt(0, UpdateRotor, CHANGE);
 
-//  showMenu(2.00, 0.01, 0.3, 2, "mm", "Set wire size");
-  showMenu(20000.0, 1.0, 5.0, 1, "turns", "Set number of turns");
+  // Print Splash screen to the LCD.
+  lcd.setCursor(8,1);
+  lcd.print("Coil");
+  lcd.setCursor(7,2);
+  lcd.print("Winder");
+  delay(2000);
+  lcd.clear();
 
-
+  // Data Stream Test returns number of failed recieve events
+   /*
+   int fail = DataStreamTest();
+   if (fail) {
+     lcd.print("I2C test failed on  ");
+     lcd.setCursor(0,1);
+     lcd.print(fail);
+     lcd.print(" events");
+     lcd.setCursor(0,3);
+     lcd.print("Rebooting...");
+     delay(2000);
+     setup();
+   }
+ */
+lcdMainMenu();
 }
-
 
 void newJob()
 {
@@ -89,7 +120,7 @@ void newJob()
 			if(!spoolResult.status) {
 				return;
 			} else {
-				// If we get here all data has been OK'd				
+				// If we get here all data has been OK'd
 
 				gwireSize = wireResult.value;
 				gturnsTotal = turnsResult.value;
@@ -121,4 +152,78 @@ void calculateStackup(double wireSize, double bobbinLength, double turns)
 void loop()
 {
 
+}
+void lcdMainMenu() {
+
+  rotor.setMinMax(0, start)
+  rotor.setPosition(0);
+
+  lcd.clear();
+  lcd.setCursor(1,0);
+  lcd.print("Setup new job");
+  lcd.setCursor(1,1);
+  lcd.print("Review job");
+  lcd.setCursor(1,2);
+  lcd.print("Start");
+  Mode=0;
+  MenuID = 0;
+  // Print out the cursor
+  lcdPrintCursor();
+}
+
+  // Decide which cursor position to clear based on the current menu
+void lcdPrintCursor() {
+  if (Mode==0 && MenuID==1) {
+    lcd.setCursor(0, 3);
+    lcd.print(" ");
+  }
+  else if (Mode==0 && MenuID==0){
+    lcd.setCursor(0, 2);
+    lcd.print(" ");
+  }
+  else if (Mode==0 && MenuID==3) {
+    lcd.setCursor(0,2);
+    lcd.print(" ");
+  }
+  else {
+    lcd.setCursor(0, Mode-1);
+    lcd.print(" ");
+  }
+  // Print cursor
+  lcd.setCursor(0, Mode);
+  lcd.print(">");
+}
+
+int DataStreamTest() {
+  // Command Test
+
+  Wire.beginTransmission(8);
+  Wire.write(0x01);
+
+  // Send Data
+  Wire.write(0xAA);
+  Wire.write(0x55);
+  Wire.write(0xFF);
+
+  Wire.endTransmission();
+  delay(100);
+  // Listen for data from other side
+  Wire.requestFrom(8, 3);
+
+  int i = 0;
+  int completed = 0;
+  while (Wire.available()) {
+    byte c = Wire.read();
+    if (c==0xAA && i==0) {
+      completed++;
+    }
+    else if (c==0x55 && i==1) {
+      completed++;
+    }
+    else if (c==0xFF && i==2) {
+      completed++;
+    }
+    i++;
+  }
+  return 3-completed;
 }
