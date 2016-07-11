@@ -26,6 +26,10 @@
 
 int print_centered(int, char *);
 
+double gwireSize;
+double gturnsTotal;
+double gspoolLength;
+
 
 // initialize the lcd library with the numbers of the interface pins
 LiquidCrystal lcd(LCD_RS, LCD_EN, LCD_D4, LCD_D5, LCD_D6, LCD_D7);
@@ -41,6 +45,8 @@ static const int rotorPinB = 3;	// the other quadrature pin
 
 RotaryEncoderAcelleration rotor;
 Button pushButton;
+
+
 
 void UpdateRotor() {
   rotor.update();
@@ -59,6 +65,58 @@ void setup()
 
 
 }
+
+
+void newJob()
+{
+
+	menuResult wireResult;
+	menuResult turnsResult;
+	menuResult spoolResult;
+
+	wireResult = showMenu(2.00, 0.01, 0.5, 2, "mm", "Set wire size");
+
+	if(!wireResult.status) {
+		return;
+	}
+	else {
+		turnsResult = showMenu(20000.0, 1.0, 500.0, 1, "turns", "Set number of turns");
+		if(!turnsResult.status) {
+			return;
+		}
+		else {
+			spoolResult = showMenu(500.0, 1.0, 10.0, 1, "mm", "Set spool length");
+			if(!spoolResult.status) {
+				return;
+			} else {
+				// If we get here all data has been OK'd				
+
+				gwireSize = wireResult.value;
+				gturnsTotal = turnsResult.value;
+				gspoolLength = spoolResult.value;
+			}
+		}
+	}
+	return;
+}
+
+void calculateStackup(double wireSize, double bobbinLength, double turns)
+{
+
+	int turnsPerLayer;
+
+	float fractional, integer;
+
+	printf("Wire size = %g, bobbin = %g, turns = %g ", wireSize, bobbinLength, turns );
+
+	turnsPerLayer = (int)(bobbinLength / wireSize);
+
+	double layers = 	turns / (double)turnsPerLayer;
+
+	fractional = modf(layers, &integer);
+}
+
+
 
 void loop()
 {
