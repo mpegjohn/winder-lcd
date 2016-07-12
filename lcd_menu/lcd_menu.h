@@ -6,3 +6,9 @@ enum mainMenuMode {
   reviewJob,
   startJob
 };
+
+struct stackup {
+	int numberWholeLayers;
+	double turnsWholeLayer;
+	double turnsLastLAyer;
+};

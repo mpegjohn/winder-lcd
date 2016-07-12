@@ -128,8 +128,10 @@ void newJob()
 	return;
 }
 
-void calculateStackup(double wireSize, double bobbinLength, double turns)
+stackup calculateStackup(double wireSize, double bobbinLength, double turns)
 {
+
+	struct stackup newStack;
 
 	int turnsPerLayer;
 
