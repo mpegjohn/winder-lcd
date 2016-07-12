@@ -157,6 +157,24 @@ void loop()
 
 }
 
+void lcdReview(stackup stack)
+{
+ lcd.clear();
+ lcd.print("T:"); lcd.print(gturnsTotal,1); lcd.print(" W:"); lcd.print(gwireSize, 2);
+ lcd.setCursor(0,1);
+ lcd.print("Spool:");lcd.print(gspoolLength,1);
+ lcd.setCursor(0,2);
+ lcd.print("Stack: "); lcd.print(stack.numberWholeLayers,1); lcd.print("@"); lcd.print(stack.turnsWholeLayer,1); lcd.print(" 1@"); lcd.print("stack.turnsLastLayer",2);
+ lcd.setCursor(0,3);
+ lcd.print("    >OK");
+
+ while(!pushButton.isPressed()){};
+
+ return;
+
+}
+
+
 void lcdMainMenu() {
 
   rotor.setMinMax(0, startJob);
@@ -182,6 +200,10 @@ while(1) {
 	if(gmenuMode == setupJob)
 	{
 		newJob();		
+	}
+	if(gmenuMode == reviewJob)
+	{
+			
 	}
   }
 
