@@ -135,7 +135,7 @@ stackup calculateStackup(double wireSize, double bobbinLength, double turns)
 
 	int turnsPerLayer;
 
-	double fractional, integer;
+	double fractional, wholeLayers;
 
 	printf("Wire size = %g, bobbin = %g, turns = %g ", wireSize, bobbinLength, turns );
 
@@ -143,7 +143,13 @@ stackup calculateStackup(double wireSize, double bobbinLength, double turns)
 
 	double layers = 	turns / (double)turnsPerLayer;
 
-	fractional = modf(layers, &integer);
+	fractional = modf(layers, &wholeLayers);
+
+	newStack.numberWholeLayers = wholeLayers;
+	newstack.turnsWholeLayer = turnsPerLayer;
+	newstack.turnsLastLayer = fractional * (double)turnsPerLayer;
+
+	return newStack;
 }
 
 void loop()

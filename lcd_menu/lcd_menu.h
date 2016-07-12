@@ -8,7 +8,7 @@ enum mainMenuMode {
 };
 
 struct stackup {
-	int numberWholeLayers;
+	double numberWholeLayers;
 	double turnsWholeLayer;
-	double turnsLastLAyer;
+	double turnsLastLayer;
 };
