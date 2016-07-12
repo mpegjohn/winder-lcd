@@ -164,6 +164,43 @@ void lcdMainMenu() {
 
   // Print out the cursor
   lcdPrintCursor();
+
+  rotor.setMinMax(0, 2);
+  rotor.setPosition(0);
+
+while(1) {
+ 
+  if (pushButton.isPressed()) {
+	if(gmenuMode == setupJob)
+	{
+		newJob();		
+	}
+  }
+
+  long pos = rotor.getPosition();
+
+  if (glastRotor != pos) {
+	switch{pos) {
+		case 0:
+		{
+			gmenuMode = setupJob:
+			break;
+		};
+		case 1:
+		{
+			gmenuMode = reviewJob:
+			break;
+		};
+		case 2:
+		{
+			gmenuMode = startJob:
+			break;
+		};
+	}
+	lcdPrintCursor();	
+  }
+  glastRotor = pos;
+};
 }
 
 // Decide which cursor position to clear based on the current menu
