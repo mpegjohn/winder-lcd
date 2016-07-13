@@ -26,9 +26,9 @@
 
 int print_centered(int, char *);
 
-double gwireSize;
-double gturnsTotal;
-double gspoolLength;
+static double gwireSize;
+static double gturnsTotal;
+static double gspoolLength;
 static long glastRotor = 0; // The laet rotor position
 struct stackup gstackup;
 static boolean gnewJobSetup;
@@ -211,11 +211,14 @@ void lcdMainMenu() {
       if (gmenuMode == setupJob) {
         newJob();
         printMainMenu();
-      }
-      if (gmenuMode == reviewJob) {
+      } else if (gmenuMode == reviewJob) {
         lcdReview(gstackup);
         printMainMenu();
-      }
+      } else if( gmenuMode == startJob) {
+	startJob(gwireSize, gturnsTotal, gspoolLength, gstackup);	
+
+	}
+
     }
 
     long pos = rotor.getPosition();
