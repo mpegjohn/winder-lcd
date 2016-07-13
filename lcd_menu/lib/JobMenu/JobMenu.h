@@ -18,16 +18,21 @@ enum menuSelection {
 };
 
 typedef union floatbytes {
-  float value;
+  double value;
   byte bytes[4];
 }
 Floatbyte;
 
+struct stackupFloatbyte {
+        Floatbyte numberWholeLayers;
+        Floatbyte turnsWholeLayer;
+        Floatbyte turnsLastLayer;
+};
 
 extern LiquidCrystal lcd;
 extern Button pushButton;
 extern RotaryEncoderAcelleration rotor;
 
-void startJob(double wireSize, double turnsTotal, double spoolLength, stackup stack);
+void startJob(double wireSize, double turnsTotal, double spoolLength, stackupFloatbyte stack);
 
 #endif

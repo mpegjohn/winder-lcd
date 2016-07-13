@@ -3,7 +3,7 @@
 
 static long grotorPosition = 0;
 
-void startJob(Floatbyte wireSize, Floatbyte turnsTotal, Floatbyte spoolLength, stackup stack) {
+void startJob(Floatbyte wireSize, Floatbyte turnsTotal, Floatbyte spoolLength, stackupFloatbyte stack) {
 
 	if(confirm() == 0)
 		return;
@@ -17,8 +17,6 @@ void startJob(Floatbyte wireSize, Floatbyte turnsTotal, Floatbyte spoolLength, s
 	lcd.setCursor(0,2);
 	lcd.print("TPS:");
 
-	Wire.beginTransmission(8); // transmit to device #8
-
 	# Send job parameters to the other UNO
 	# [0x1] -- comand job paremeters
 	# [4 bytes] -- wire size
@@ -27,16 +25,44 @@ void startJob(Floatbyte wireSize, Floatbyte turnsTotal, Floatbyte spoolLength, s
 	# [4 bytes ] -- Turns per layer
 	# [4 bytes ] -- Number of whole layers
 	# [4 bytes ] -- Turns last layer
+
+	byte parameterData [25];
+
+	byte * pparameterData;
+
+	pparameterData = parameterData;
+
+ 	*pparameterData++ = 0x1;
+	pparameterData = doubleToData(wireSize.bytes, *pparameterData);
+	pparameterData = doubleToData(turnsTotal.bytes, *pparameterData);
+        pparameterData = doubleToData(spoolLength.bytes, *pparameterData);
+	pparameterData = doubleToData(stack.turnsWholeLayer.bytes, *pparameterData);
+	pparameterData = doubleToData(stack.numberWholeLayers.bytes, *pparameterData);
+	pparameterData = doubleToData(stack.turnsLastLayer.bytes, *pparameterData);
+
 	
-
-
 
 	Wire.beginTransmission(8); // transmit to device #8
 
+	
+	Wire.write(parameterData);
+
+
+	Wire.endTransmission();
 
 
 
 
+
+}
+
+byte * doubleToData(byte [4] dataArray , byte *pparameterData)
+{
+	for ( int i = 0; i < 4; i++){
+		*pparameterData++ = dataArray[i]; 		
+	}
+
+	returni pparameterData;
 }
 
 
