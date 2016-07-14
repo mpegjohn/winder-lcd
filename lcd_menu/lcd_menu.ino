@@ -1,14 +1,4 @@
 
-
-#include <Arduino.h>
-
-// include the library code:
-#include <Button.h>
-#include <LiquidCrystal.h>
-#include <RotaryEncoderAcelleration.h>
-#include <TicksPerSecond.h>
-#include <ValueMenu.h>
-#include <Wire.h>
 #include <lcd_menu.h>
 
 #define LCD_D7 9
@@ -26,11 +16,12 @@
 
 int print_centered(int, char *);
 
-static double gwireSize;
-static double gturnsTotal;
-static double gspoolLength;
+static Floatbyte gwireSize;
+static Floatbyte gturnsTotal;
+static Floatbyte gspoolLength;
+
 static long glastRotor = 0; // The laet rotor position
-struct stackup gstackup;
+StackFloatBytes gstackup;
 static boolean gnewJobSetup;
 
 // initialize the lcd library with the numbers of the interface pins
@@ -49,7 +40,7 @@ Button pushButton;
 
 void UpdateRotor() { rotor.update(); }
 
-mainMenuMode gmenuMode = setupJob;
+mainMenuMode gmenuMode = setupJobMode;
 
 void setup() {
   // setup LCD
@@ -114,21 +105,23 @@ void newJob() {
       } else {
         // If we get here all data has been OK'd
 
-        gwireSize = wireResult.value;
-        gturnsTotal = turnsResult.value;
-        gspoolLength = spoolResult.value;
+        gwireSize.value = wireResult.value;
+        gturnsTotal.value = turnsResult.value;
+        gspoolLength.value = spoolResult.value;
       }
     }
   }
 
-  gstackup = calculateStackup(gwireSize, gspoolLength, gturnsTotal);
+  gstackup =
+      calculateStackup(gwireSize.value, gspoolLength.value, gturnsTotal.value);
 
   return;
 }
 
-stackup calculateStackup(double wireSize, double bobbinLength, double turns) {
+StackFloatBytes calculateStackup(double wireSize, double bobbinLength,
+                                 double turns) {
 
-  struct stackup newStack;
+  StackFloatBytes newStack;
 
   int turnsPerLayer;
 
@@ -143,34 +136,34 @@ stackup calculateStackup(double wireSize, double bobbinLength, double turns) {
 
   fractional = modf(layers, &wholeLayers);
 
-  newStack.numberWholeLayers = wholeLayers;
-  newStack.turnsWholeLayer = turnsPerLayer;
-  newStack.turnsLastLayer = fractional * (double)turnsPerLayer;
+  newStack.numberWholeLayers.value = wholeLayers;
+  newStack.turnsWholeLayer.value = turnsPerLayer;
+  newStack.turnsLastLayer.value = fractional * (double)turnsPerLayer;
 
   return newStack;
 }
 
 void loop() {}
 
-void lcdReview(stackup stack) {
+void lcdReview(StackFloatBytes stack) {
   lcd.clear();
   lcd.setCursor(0, 0);
   lcd.print("T:");
-  lcd.print(gturnsTotal, 1);
+  lcd.print(gturnsTotal.value, 1);
   lcd.print(" W:");
-  lcd.print(gwireSize, 2);
+  lcd.print(gwireSize.value, 2);
 
   lcd.setCursor(0, 1);
   lcd.print("Spool:");
-  lcd.print(gspoolLength, 1);
+  lcd.print(gspoolLength.value, 1);
 
   lcd.setCursor(0, 2);
   lcd.print("Stk:");
-  lcd.print(stack.numberWholeLayers, 1);
+  lcd.print(stack.numberWholeLayers.value, 1);
   lcd.print("@");
-  lcd.print(stack.turnsWholeLayer, 1);
+  lcd.print(stack.turnsWholeLayer.value, 1);
   lcd.print(" 1@");
-  lcd.print(stack.turnsLastLayer, 1);
+  lcd.print(stack.turnsLastLayer.value, 1);
   lcd.setCursor(0, 3);
   lcd.print("    >OK");
 
@@ -182,7 +175,7 @@ void lcdReview(stackup stack) {
 }
 
 void printMainMenu() {
-  rotor.setMinMax(0, startJob);
+  rotor.setMinMax(0, startJobMode);
   rotor.setPosition(0);
 
   lcd.clear();
@@ -208,17 +201,15 @@ void lcdMainMenu() {
   while (1) {
     pushButton.update();
     if (pushButton.isPressed()) {
-      if (gmenuMode == setupJob) {
+      if (gmenuMode == setupJobMode) {
         newJob();
         printMainMenu();
-      } else if (gmenuMode == reviewJob) {
+      } else if (gmenuMode == reviewJobMode) {
         lcdReview(gstackup);
         printMainMenu();
-      } else if( gmenuMode == startJob) {
-	startJob(gwireSize, gturnsTotal, gspoolLength, gstackup);	
-
-	}
-
+      } else if (gmenuMode == startJobMode) {
+        startJob(gwireSize, gturnsTotal, gspoolLength, gstackup);
+      }
     }
 
     long pos = rotor.getPosition();
@@ -226,15 +217,15 @@ void lcdMainMenu() {
     if (glastRotor != pos) {
       switch (pos) {
       case 0: {
-        gmenuMode = setupJob;
+        gmenuMode = setupJobMode;
         break;
       };
       case 1: {
-        gmenuMode = reviewJob;
+        gmenuMode = reviewJobMode;
         break;
       };
       case 2: {
-        gmenuMode = startJob;
+        gmenuMode = startJobMode;
         break;
       };
       }
@@ -255,15 +246,15 @@ void lcdPrintCursor() {
 
   // Display the > at the correct line
   switch (gmenuMode) {
-  case setupJob: {
+  case setupJobMode: {
     lcd.setCursor(0, 0);
     break;
   }
-  case reviewJob: {
+  case reviewJobMode: {
     lcd.setCursor(0, 1);
     break;
   }
-  case startJob: {
+  case startJobMode: {
     lcd.setCursor(0, 2);
     break;
   }

@@ -7,32 +7,30 @@
 #include <RotaryEncoderAcelleration.h>
 #include <TicksPerSecond.h>
 #include <Wire.h>
-#include <lcd_menu.h>
 
 #define LCD_COLS 20
 #define LCD_ROWS 4
 
-enum menuSelection {
-	cancelSelected,
-	okSelected
-};
+enum menuSelection { cancelSelected, okSelected };
 
 typedef union floatbytes {
-  double value;
-  byte bytes[4];
-}
-Floatbyte;
+  uint8_t bytes[4];
+  float value;
+} Floatbyte;
 
-struct stackupFloatbyte {
-        Floatbyte numberWholeLayers;
-        Floatbyte turnsWholeLayer;
-        Floatbyte turnsLastLayer;
-};
+typedef struct stackupFloats {
+  Floatbyte numberWholeLayers;
+  Floatbyte turnsWholeLayer;
+  Floatbyte turnsLastLayer;
+} StackFloatBytes;
 
 extern LiquidCrystal lcd;
 extern Button pushButton;
 extern RotaryEncoderAcelleration rotor;
 
-void startJob(double wireSize, double turnsTotal, double spoolLength, stackupFloatbyte stack);
+void startJob(Floatbyte wireSize, Floatbyte turnsTotal, Floatbyte spoolLength,
+              StackFloatBytes stackUp);
 
+int confirm();
+uint8_t *doubleToData(uint8_t *dataArray, uint8_t *pparameterData);
 #endif
