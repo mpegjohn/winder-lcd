@@ -17,6 +17,8 @@ void startJob(Floatbyte wireSize, Floatbyte turnsTotal, Floatbyte spoolLength,
   lcd.setCursor(0, 2);
   lcd.print("TPS:");
 
+  while (1) {
+  }
   // Send job parameters to the other UNO
   // [0x1] -- comand job paremeters
   // [4 bytes] -- wire size
@@ -61,12 +63,12 @@ int confirm() {
   lcd.print("Start Job?");
   lcd.setCursor(0, 3);
 
-  lcd.print("   >Cancel         OK");
+  lcd.print(" >Cancel       OK");
 
   rotor.setMinMax(0, 1);
   rotor.setPosition(0);
 
-  menuSelection selection = cancelSelected;
+  menuSelection selection;
 
   while (1) {
     pushButton.update();
@@ -81,14 +83,14 @@ int confirm() {
     long pos = rotor.getPosition();
     if (pos != grotorPosition) {
       if (pos == 0) {
-        lcd.setCursor(18, 3);
+        lcd.setCursor(14, 3);
         lcd.print(" ");
-        lcd.setCursor(4, 3);
+        lcd.setCursor(2, 3);
         selection = cancelSelected;
       } else {
-        lcd.setCursor(4, 3);
+        lcd.setCursor(2, 3);
         lcd.print(" ");
-        lcd.setCursor(18, 3);
+        lcd.setCursor(14, 3);
         selection = okSelected;
       }
       lcd.print(">");
