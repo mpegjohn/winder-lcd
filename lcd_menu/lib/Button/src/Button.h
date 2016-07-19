@@ -26,63 +26,55 @@
  * gnd:<---------------*------------|
  */
 class Button {
-	uint8_t buttonPin;
-	boolean lastState;
-	boolean buttonState;
-	long lastToggleTime;	// used to debounce the button
+  uint8_t buttonPin;
+  boolean lastState;
+  boolean buttonState;
+  long lastToggleTime; // used to debounce the button
 
-	/**
-	 * Debounce time in milliseconds, default 10
-	 */
-	int debounce;
+  /**
+   * Debounce time in milliseconds, default 10
+   */
+  int debounce;
 
 public:
-	/**
-	 * Initializes the class.
-	 *
-	 * pin		Number of the pin there the button is attached.
-	 *
-	 * debounceMillis
-	 * 			The button debounce time in milliseconds.
-	 */
-	void initialize(uint8_t pin, int debounceMillis = 10);
+  /**
+   * Initializes the class.
+   *
+   * pin		Number of the pin there the button is attached.
+   *
+   * debounceMillis
+   * 			The button debounce time in milliseconds.
+   */
+  void initialize(uint8_t pin, int debounceMillis = 10);
 
-	/**
-	 * Updates the state of the rotary knob.
-	 * This method should be placed in the main loop of the program or
-	 * might be invoked from an interrupt.
-	 */
-	void update(void);
+  /**
+   * Updates the state of the rotary knob.
+   * This method should be placed in the main loop of the program or
+   * might be invoked from an interrupt.
+   */
+  void update(void);
 
-	/**
-	 * Has the button stated changed from isUp to isDown at the last update.
-	 * This is to be used like an OnKeyDown.
-	 */
-	inline boolean isPressed(void) {
-		return ((!buttonState) && lastState);
-	}
+  /**
+   * Has the button stated changed from isUp to isDown at the last update.
+   * This is to be used like an OnKeyDown.
+   */
+  inline boolean isPressed(void) { return ((!buttonState) && lastState); }
 
-	/**
-	 * Has the button stated changed from isDown to isUp at the last update.
-	 * This is to be used like an OnKeyUp.
-	 */
-	inline boolean isReleased(void) {
-		return (buttonState && (!lastState));
-	}
+  /**
+   * Has the button stated changed from isDown to isUp at the last update.
+   * This is to be used like an OnKeyUp.
+   */
+  inline boolean isReleased(void) { return (buttonState && (!lastState)); }
 
-	/**
-	 * Is the button down (pushed).
-	 */
-	inline boolean isDown(void) {
-		return (!buttonState);
-	}
+  /**
+   * Is the button down (pushed).
+   */
+  inline boolean isDown(void) { return (!buttonState); }
 
-	/**
-	 * Is the button up.
-	 */
-	inline boolean isUp(void) {
-		return (buttonState);
-	}
+  /**
+   * Is the button up.
+   */
+  inline boolean isUp(void) { return (buttonState); }
 };
 
 #endif

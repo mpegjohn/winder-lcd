@@ -1,12 +1,12 @@
 
 #include <lcd_menu.h>
 
-#define LCD_D7 9
-#define LCD_D6 10
-#define LCD_D5 4
-#define LCD_D4 5
-#define LCD_EN 11
-#define LCD_RS 12
+#define LCD_D7 A0
+#define LCD_D6 A1
+#define LCD_D5 A2
+#define LCD_D4 A3
+#define LCD_EN A4
+#define LCD_RS A5
 
 #define LCD_COLS 20
 #define LCD_ROWS 4
@@ -31,9 +31,9 @@ LiquidCrystal lcd(LCD_RS, LCD_EN, LCD_D4, LCD_D5, LCD_D6, LCD_D7);
 boolean A_set = false;
 boolean B_set = false;
 
-static const int buttonPin = A0; // the number of the pushbutton pin
-static const int rotorPinA = 2;  // One quadrature pin
-static const int rotorPinB = 3;  // the other quadrature pin
+static const int buttonPin = 6; // the number of the pushbutton pin
+static const int rotorPinA = 2; // One quadrature pin
+static const int rotorPinB = 3; // the other quadrature pin
 
 RotaryEncoderAcelleration rotor;
 Button pushButton;
@@ -53,7 +53,7 @@ void setup() {
   pushButton.initialize(buttonPin);
 
   // Setup Wire
-  Wire.begin();
+  // Wire.begin();
 
   // setup interupt for encoder
   attachInterrupt(0, UpdateRotor, CHANGE);
@@ -63,6 +63,7 @@ void setup() {
   lcd.print("Coil");
   lcd.setCursor(7, 2);
   lcd.print("Winder");
+
   delay(2000);
   lcd.clear();
 

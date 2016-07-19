@@ -19,4 +19,10 @@ struct stackup {
   double turnsWholeLayer;
   double turnsLastLayer;
 };
+
+void lcdMainMenu();
+StackFloatBytes calculateStackup(double wireSize, double bobbinLength,
+                                 double turns);
+void lcdPrintCursor();
+
 #endif
