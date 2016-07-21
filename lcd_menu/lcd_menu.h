@@ -25,4 +25,6 @@ StackFloatBytes calculateStackup(double wireSize, double bobbinLength,
                                  double turns);
 void lcdPrintCursor();
 
+int DataStreamTest();
+
 #endif

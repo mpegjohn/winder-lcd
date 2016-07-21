@@ -5,14 +5,16 @@
 #define LCD_D6 A1
 #define LCD_D5 A2
 #define LCD_D4 A3
-#define LCD_EN A4
-#define LCD_RS A5
+#define LCD_EN 12
+#define LCD_RS 11
 
 #define LCD_COLS 20
 #define LCD_ROWS 4
 
 #define encoderPinA 2
 #define encoderPinB 3
+
+#define LED 13
 
 int print_centered(int, char *);
 
@@ -53,7 +55,7 @@ void setup() {
   pushButton.initialize(buttonPin);
 
   // Setup Wire
-  // Wire.begin();
+  Wire.begin();
 
   // setup interupt for encoder
   attachInterrupt(0, UpdateRotor, CHANGE);
@@ -68,19 +70,31 @@ void setup() {
   lcd.clear();
 
   // Data Stream Test returns number of failed recieve events
-  /*
-  int fail = DataStreamTest();
-  if (fail) {
+
+  int tryCount = 0;
+
+  while (int fail = DataStreamTest() && tryCount < 3) {
+    lcd.clear();
     lcd.print("I2C test failed on  ");
-    lcd.setCursor(0,1);
+    lcd.setCursor(0, 1);
     lcd.print(fail);
     lcd.print(" events");
-    lcd.setCursor(0,3);
-    lcd.print("Rebooting...");
+    lcd.setCursor(0, 3);
+    lcd.print("Retry number ");
+    lcd.print(tryCount + 1);
     delay(2000);
-    setup();
+    tryCount++;
+  };
+
+  if (tryCount >= 3) {
+    while (1) {
+      digitalWrite(LED, HIGH); // turn the LED on (HIGH is the voltage level)
+      delay(1000);             // wait for a second
+      digitalWrite(LED, LOW);  // turn the LED off by making the voltage LOW
+      delay(1000);             // wait for a second
+    }
   }
-*/
+
   gnewJobSetup = false;
   lcdMainMenu();
 }
@@ -265,6 +279,8 @@ void lcdPrintCursor() {
 
 int DataStreamTest() {
   // Command Test
+
+  return 1;
 
   Wire.beginTransmission(8);
   Wire.write(0x01);
