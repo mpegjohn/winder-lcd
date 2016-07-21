@@ -1,15 +1,40 @@
 #include <Arduino.h>
 #include <Wire.h>
 
+uint8_t * get_float_from_array(uint8_t * out_array, uint8_t * current_index);
+
 typedef union floatbytes {
   float value;
-  byte bytes[4];
+  uint8_t bytes[4];
 }
-Floatbyte;
+Floatbyte_t;
 
-Floatbyte wire_size;
-Floatbyte turns;
-Floatbyte spool_length;
+volatile Floatbyte_t wire_size;
+volatile Floatbyte_t turns;
+volatile Floatbyte_t spool_length;
+volatile Floatbyte_t tuns_per_layer;
+volatile Floatbyte_t whole_layers;
+volatile Floatbyte_t last_layer_turns;
+
+Floatbyte_t current_layer = 0.0;
+Floatbyte_t curren_turns = 0.0;
+Floatbyte_t current_layer_turns = 0.0;
+Floatbyte_t current_speed = 0.0;
+
+uint8_t direction = 0;
+uint8_t running = 0;
+
+
+enum modes {
+	testMode,
+	parameterMode,
+	startMode,
+	getStatusMode	
+};
+
+modes current_mode = testMode;
+
+uint8_t i2c_test_data[3];
 
 void setup()
 {
@@ -25,58 +50,96 @@ void setup()
 
 void loop()
 {
-  Serial.print("Wire size: ");
-  printDouble(wire_size.value,2);
-  Serial.print("\n");
 
-  Serial.print("turns: ");
-  printDouble(turns.value,2);
-  Serial.print("\n");
-  Serial.print("spool length: ");
-  printDouble(spool_length.value,2);
-  Serial.print("\n");
+	if(current_mode == startMode) {
+		  Serial.print("Wire size: ");
+		  printDouble(wire_size.value,2);
+		  Serial.print("\n");
 
+		  Serial.print("turns: ");
+		  printDouble(turns.value,2);
+		  Serial.print("\n");
+		  Serial.print("spool length: ");
+		  printDouble(spool_length.value,2);
+		  Serial.print("\n");
+		  running = 1;
+		  current_layer = 1;
+	}
+	if(current_mode == statusMode) {
+			
+		current_turns = current_turns + 1.0;
+		current_layer_turns = current_layer_turns + 1.0;
+		current_speed = 1.2;
+	}
   delay(1000);
+
+
 }
 
-byte i2c_test_data [3];
 
 void requestEvent()
 {
-  //Wire.write(i2c_test_data, 3);
+  if(current_mode == testMode) {
+     Wire.write(i2c_test_data,3);
+  }
+  else if(current_mode == getStatusMode) {
 
-  Wire.write(i2c_test_data,3);
+	//[4 bytes layer]
+	//[4 bytes turns]
+	//[4 bytes layer turns]
+	//[4 bytes speed]
+ 	//[1 byte] direction 1 = L to R, 0 = R to L
+	//[1 byte] running 1 = running, 0 - stopped
 
+	uint8_t status_data[18];
 
+	uint8_t * status_data_pointer;
+	status_data_pointer = status_data;
+
+	status_data_pointer = doubleToData(current_layer.bytes, status_data_pointer);
+	status_data_pointer = doubleToData(current_turns.bytes, status_data_pointer);
+	status_data_pointer = doubleToData(current_layer_turns.bytes, status_data_pointer);
+	status_data_pointer = doubleToData(current_speed.bytes, status_data_pointer);
+	status_data[16] = direction;
+	status_data[17] = running;
+
+	Wire.write( status_data, 18);
+  }
 }
 
 // function that executes whenever data is received from master
 // this function is registered as an event, see setup()
 void receiveEvent(int howMany)
 {
-  byte command = Wire.read();
-  //  Serial.print("received ");
-  //  Serial.print(command, HEX);
-  //  Serial.print("\n");
-  if(command == 0x01) // I2C test
+  uint8_t command = Wire.read();
+  if(command == 0x00) // I2C test
   {
     //    Serial.print("I2C test received \n");
+    current_mode = testMode
     int i = 0;
     while(Wire.available())
     {
       i2c_test_data[i++] = Wire.read();
     }
   }
-  else if(command == 0x00) // Job perameters
+  else if(command == 0x01) // Job perameters
   {
-    //0x01            => Command job parameters
-    //[4 bytes]      => wire size
-    //[4 bytes]      => number of turns
-    //[4 bytes]      => spool length
-    //[checksum]
-    Serial.print("New job perameters received \n");
+  // [0x1] -- Mode 1 comand job paremeters
+  // [4 bytes] -- wire size
+  // [4 bytes] -- Total turns
+  // [4 bytes ] -- spool length
+  // [4 bytes ] -- Turns per layer
+  // [4 bytes ] -- Number of whole layers
+  // [4 bytes ] -- Turns last layer
 
-    byte parameters[12];
+    Serial.print("New job perameters received \n");
+    current_mode = parameterMode;
+
+    uint8_t parameters[24];
+
+    uint8_t * parameters_pointer;    
+
+    parameters_pointer = parameters;
 
     int i = 0;
     while(Wire.available())
@@ -84,41 +147,52 @@ void receiveEvent(int howMany)
       parameters[i++] = Wire.read();
     }
 
-    byte * offset_base;
-    offset_base = parameters;
-
-    for(i = 0; i<4; i++)
-    {
-      wire_size.bytes[i] = *offset_base++;
-    }
-
-    for(i = 0; i<4; i++)
-    {
-      turns.bytes[i] = *offset_base++;
-    }
-
-    for(i = 0; i<4; i++)
-    {
-      spool_length.bytes[i] = *offset_base++;
-    }
-
-
+    parameters_pointer = get_float_from_array(wire_size.bytes, parameters_pointer);
+    parameters_pointer = get_float_from_array(turns.bytes, parameters_pointer);
+    parameters_pointer = get_float_from_array(spool_length.bytes, parameters_pointer);
+    parameters_pointer = get_float_from_array(tuns_per_layer.bytes, parameters_pointer);
+    parameters_pointer = get_float_from_array(whole_layers.bytes, parameters_pointer);
+    parameters_pointer = get_float_from_array(last_layer_turns.bytes, parameters_pointer);
+  }
+  else if(command == 0x02) //start
+  {
+	current_mode = startMode;
+  }
+  else if(command == 0x03) //status
+  {
+	current_mode = statusMode;
   }
 }
 
+uint8_t * get_float_from_array(uint8_t * out_array, uint8_t * current_index) {
+
+        int i = 0;
+        for(i = 0; i<4; i++)
+        {
+                out_array[i] = *current_index++;
+        }
+        return current_index;
+}
+
+uint8_t *doubleToData(uint8_t *dataArray, uint8_t *pparameterData) {
+  for (int i = 0; i < 4; i++) {
+    *pparameterData++ = dataArray[i];
+  }
+  return pparameterData;
+}
 
 //CRC-8 - based on the CRC8 formulas by Dallas/Maxim
 //http://www.leonardomiliani.com/en/2013/un-semplice-crc8-per-arduino/
 //code released under the therms of the GNU GPL 3.0 license
-byte CRC8(const byte *data, byte len)
+uint8_t CRC8(const uint8_t *data, uint8_t len)
 {
-  byte crc = 0x00;
+  uint8_t crc = 0x00;
   while (len--)
   {
-    byte extract = *data++;
-    for (byte tempI = 8; tempI; tempI--)
+    uint8_t extract = *data++;
+    for (uint8_t tempI = 8; tempI; tempI--)
     {
-      byte sum = (crc ^ extract) & 0x01;
+      uint8_t sum = (crc ^ extract) & 0x01;
       crc >>= 1;
       if (sum)
       {
@@ -131,7 +205,7 @@ byte CRC8(const byte *data, byte len)
 }
 
 
-void printDouble( double val, byte precision){
+void printDouble( double val, uint8_t precision){
   // prints val with number of decimal places determine by precision
   // precision is a number from 0 to 6 indicating the desired decimial places
   // example: printDouble( 3.1415, 2); // prints 3.14 (two decimal places)
@@ -141,7 +215,7 @@ void printDouble( double val, byte precision){
     Serial.print("."); // print the decimal point
     unsigned long frac;
     unsigned long mult = 1;
-    byte padding = precision -1;
+    uint8_t padding = precision -1;
     while(precision--)
       mult *=10;
 

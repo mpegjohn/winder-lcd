@@ -20,7 +20,7 @@ void startJob(Floatbyte wireSize, Floatbyte turnsTotal, Floatbyte spoolLength,
   while (1) {
   }
   // Send job parameters to the other UNO
-  // [0x1] -- comand job paremeters
+  // [0x1] -- Mode 1 comand job paremeters
   // [4 bytes] -- wire size
   // [4 bytes] -- Total turns
   // [4 bytes ] -- spool length

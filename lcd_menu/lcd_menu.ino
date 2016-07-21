@@ -1,6 +1,9 @@
-
 #include <lcd_menu.h>
+/*
+* This is the main program.
+*/
 
+// The LCD pins
 #define LCD_D7 A0
 #define LCD_D6 A1
 #define LCD_D5 A2
@@ -11,9 +14,14 @@
 #define LCD_COLS 20
 #define LCD_ROWS 4
 
-#define encoderPinA 2
-#define encoderPinB 3
+// The encoder pins
+#define rotorPinA 2
+#define rotorPinB 3
 
+// the push button on the encoder
+#define buttonPin 6
+
+// The warning LED
 #define LED 13
 
 int print_centered(int, char *);
@@ -32,10 +40,6 @@ LiquidCrystal lcd(LCD_RS, LCD_EN, LCD_D4, LCD_D5, LCD_D6, LCD_D7);
 // interrupt service routine vars
 boolean A_set = false;
 boolean B_set = false;
-
-static const int buttonPin = 6; // the number of the pushbutton pin
-static const int rotorPinA = 2; // One quadrature pin
-static const int rotorPinB = 3; // the other quadrature pin
 
 RotaryEncoderAcelleration rotor;
 Button pushButton;
@@ -70,9 +74,9 @@ void setup() {
   lcd.clear();
 
   // Data Stream Test returns number of failed recieve events
-
   int tryCount = 0;
 
+  // Try ro do the I2C test 3 times.
   while (int fail = DataStreamTest() && tryCount < 3) {
     lcd.clear();
     lcd.print("I2C test failed on  ");
@@ -86,6 +90,7 @@ void setup() {
     tryCount++;
   };
 
+  // If we have failed 3 times stop and flash LED.
   if (tryCount >= 3) {
     while (1) {
       digitalWrite(LED, HIGH); // turn the LED on (HIGH is the voltage level)
@@ -142,9 +147,6 @@ StackFloatBytes calculateStackup(double wireSize, double bobbinLength,
 
   double fractional, wholeLayers;
 
-  printf("Wire size = %g, bobbin = %g, turns = %g ", wireSize, bobbinLength,
-         turns);
-
   turnsPerLayer = (int)(bobbinLength / wireSize);
 
   double layers = turns / (double)turnsPerLayer;
@@ -162,7 +164,6 @@ void loop() {}
 
 void lcdReview(StackFloatBytes stack) {
   lcd.clear();
-  lcd.setCursor(0, 0);
   lcd.print("T:");
   lcd.print(gturnsTotal.value, 1);
   lcd.print(" W:");
@@ -217,12 +218,15 @@ void lcdMainMenu() {
     pushButton.update();
     if (pushButton.isPressed()) {
       if (gmenuMode == setupJobMode) {
+	// Setup a new job
         newJob();
         printMainMenu();
       } else if (gmenuMode == reviewJobMode) {
+	// Review the current job
         lcdReview(gstackup);
         printMainMenu();
       } else if (gmenuMode == startJobMode) {
+	// Start the job
         startJob(gwireSize, gturnsTotal, gspoolLength, gstackup);
       }
     }
@@ -283,7 +287,7 @@ int DataStreamTest() {
   return 1;
 
   Wire.beginTransmission(8);
-  Wire.write(0x01);
+  Wire.write(0x00);
 
   // Send Data
   Wire.write(0xAA);
