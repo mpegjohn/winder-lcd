@@ -218,15 +218,15 @@ void lcdMainMenu() {
     pushButton.update();
     if (pushButton.isPressed()) {
       if (gmenuMode == setupJobMode) {
-	// Setup a new job
+        // Setup a new job
         newJob();
         printMainMenu();
       } else if (gmenuMode == reviewJobMode) {
-	// Review the current job
+        // Review the current job
         lcdReview(gstackup);
         printMainMenu();
       } else if (gmenuMode == startJobMode) {
-	// Start the job
+        // Start the job
         startJob(gwireSize, gturnsTotal, gspoolLength, gstackup);
       }
     }
@@ -283,8 +283,6 @@ void lcdPrintCursor() {
 
 int DataStreamTest() {
   // Command Test
-
-  return 1;
 
   Wire.beginTransmission(8);
   Wire.write(0x00);
