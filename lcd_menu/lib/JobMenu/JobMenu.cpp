@@ -17,8 +17,6 @@ void startJob(Floatbyte wireSize, Floatbyte turnsTotal, Floatbyte spoolLength,
   lcd.setCursor(0, 2);
   lcd.print("TPS:");
 
-  while (1) {
-  }
   // Send job parameters to the other UNO
   // [0x1] -- Mode 1 comand job paremeters
   // [4 bytes] -- wire size
@@ -49,7 +47,108 @@ void startJob(Floatbyte wireSize, Floatbyte turnsTotal, Floatbyte spoolLength,
   Wire.write(parameterData, 25);
 
   Wire.endTransmission();
+
+  delay(1000);
+
+  //send start
+
+  Wire.beginTransmission(8);
+
+  Wire.write(0x2);
+
+  Wire.endTransmission();
+
+  updateDisplay(turnsTotal.value);
+
 }
+
+
+void updateDisplay(double total_turns) {
+
+
+ Floatbytes current_layer;
+ Floatbytes current_turns;
+ Floatbytes current_layer_turns;
+ Floatbytes current_speed;
+ uint8_t direction;
+ uint8_t running; 
+
+do(	
+  //send get status
+
+  Wire.beginTransmission(8);
+
+  Wire.write(0x3);
+
+  Wire.endTransmission();
+
+  delay(100);
+
+   // Listen for data from other side
+  Wire.requestFrom(8, 18);
+
+   uint8_t statusArray[18];
+
+    int i = 0;
+    while (Wire.available()) {
+      statusArray[i++] = Wire.read();
+    }
+
+    uint8_t * status_ointer;
+    status_ointer = statusArray;
+
+    status_pointer =
+        get_float_from_array(current_layer.bytes, status_pointer);
+    status_pointer =
+        get_float_from_array(current_turns.bytes, status_pointer);
+    status_pointer =
+        get_float_from_array(current_layer_turns.bytes, status_pointer);
+    status_pointer =
+        get_float_from_array(current_speed.bytes, status_pointer);
+
+    direction = * status_pointer++;
+    running = * status_pointer++;
+
+  lcd.print("L:      T:");
+  lcd.setCursor(0, 1);
+  lcd.print("TT%:      LT%:");
+  lcd.setCursor(0, 2);
+  lcd.print("TPS:");
+
+    lcd.clear();
+    lcd.print("Lyr:");
+    lcd.print(current_layer.value,1);
+    lsc.print(" Tps:");
+    lcd.print(current_speed.value,1);
+
+    lcd.setCursor(0, 1);
+    lcd.print("Turns:");
+    lcd.print(current_turns.value,1);
+    lcd.print(" %:");
+
+    lcd.setCursor(0, 2);
+    
+
+    double precent_turns = (current_turns.value / total_turns) * 100.0;
+
+    lcd.print( precent_turns,1);
+
+    delay(500);
+)while(running);
+
+}
+
+uint8_t *get_float_from_array(uint8_t *out_array, uint8_t *current_index) {
+
+  int i = 0;
+  for (i = 0; i < 4; i++) {
+    out_array[i] = *current_index++;
+  }
+  return current_index;
+}
+
+
+
 
 uint8_t *doubleToData(uint8_t *dataArray, uint8_t *pparameterData) {
   for (int i = 0; i < 4; i++) {

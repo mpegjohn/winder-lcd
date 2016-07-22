@@ -24,9 +24,10 @@ Floatbyte_t current_speed;
 uint8_t direction = 0;
 uint8_t running = 0;
 
-enum modes { testMode, parameterMode, startMode, getStatusMode };
+enum modes { idleMode, testMode, parameterMode, runningMode, getStatusMode };
 
-modes current_mode = testMode;
+modes current_mode = idleMode;
+modes request_mode = idleMode;
 
 uint8_t i2c_test_data[3];
 
@@ -43,7 +44,7 @@ void setup() {
 
 void loop() {
 
-  if (current_mode == startMode) {
+  if (current_mode == parameterMode) {
     Serial.print("Wire size: ");
     printDouble(wire_size.value, 2);
     Serial.print("\n");
@@ -57,7 +58,7 @@ void loop() {
     running = 1;
     current_layer.value = 1.0;
   }
-  if (current_mode == getStatusMode) {
+  if (current_mode == runningMode ) {
 
     current_turns.value = current_turns.value + 1.0;
     current_layer_turns.value = current_layer_turns.value + 1.0;
@@ -69,7 +70,8 @@ void loop() {
 void requestEvent() {
   if (current_mode == testMode) {
     Wire.write(i2c_test_data, 3);
-  } else if (current_mode == getStatusMode) {
+    current_mode = idleMode;
+  } else if (request_mode == getStatusMode) {
 
     //[4 bytes layer]
     //[4 bytes turns]
@@ -95,6 +97,7 @@ void requestEvent() {
     status_data[17] = running;
 
     Wire.write(status_data, 18);
+    request_mode= idleMode;
   }
 }
 
@@ -121,7 +124,6 @@ void receiveEvent(int howMany) {
     // [4 bytes ] -- Turns last layer
 
     Serial.print("New job perameters received \n");
-    current_mode = parameterMode;
 
     uint8_t parameters[24];
 
@@ -145,12 +147,14 @@ void receiveEvent(int howMany) {
         get_float_from_array(whole_layers.bytes, parameters_pointer);
     parameters_pointer =
         get_float_from_array(last_layer_turns.bytes, parameters_pointer);
-  } else if (command == 0x02) // start
+
+    current_mode = parameterMode;
+  } else if ((command == 0x02) && (current_mode == parameterMode)) // start
   {
-    current_mode = startMode;
+    current_mode = runningMode;
   } else if (command == 0x03) // status
   {
-    current_mode = getStatusMode;
+    request_mode = getStatusMode;
   }
 }
 
