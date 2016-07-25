@@ -2,10 +2,10 @@
 /**
 * @file lcd_menu.ino
 * @brief The deta entry and LCD display program for the first Arduino NANO.
-* 
+*
 * @author J Wilkinson
 * @date 25/7/2016
-* 
+*
 */
 
 static Floatbyte_t gwireSize;
@@ -120,10 +120,10 @@ void newJob() {
   return;
 }
 
-StackFloatBytes calculateStackup(double wireSize, double bobbinLength,
-                                 double turns) {
+StackFloatBytes_t calculateStackup(double wireSize, double bobbinLength,
+                                   double turns) {
 
-  StackFloatBytes newStack;
+  StackFloatBytes_t newStack;
 
   int turnsPerLayer;
 
@@ -144,7 +144,7 @@ StackFloatBytes calculateStackup(double wireSize, double bobbinLength,
 
 void loop() {}
 
-void lcdReview(StackFloatBytes stack) {
+void lcdReview(StackFloatBytes_t stack) {
   lcd.clear();
   lcd.print("T:");
   lcd.print(gturnsTotal.value, 1);
@@ -210,6 +210,7 @@ void lcdMainMenu() {
       } else if (gmenuMode == startJobMode) {
         // Start the job
         startJob(gwireSize, gturnsTotal, gspoolLength, gstackup);
+        printMainMenu();
       }
     }
 

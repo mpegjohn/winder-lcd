@@ -58,13 +58,17 @@ void loop() {
     running = 1;
     current_layer.value = 1.0;
   }
-  if (current_mode == runningMode ) {
+  if (current_mode == runningMode) {
 
     current_turns.value = current_turns.value + 1.0;
     current_layer_turns.value = current_layer_turns.value + 1.0;
     current_speed.value = 1.2;
+    if (current_turns.value == turns.value) {
+      current_mode = idleMode;
+      running = 0;
+    }
   }
-  delay(1000);
+  delay(100);
 }
 
 void requestEvent() {
@@ -97,7 +101,7 @@ void requestEvent() {
     status_data[17] = running;
 
     Wire.write(status_data, 18);
-    request_mode= idleMode;
+    request_mode = idleMode;
   }
 }
 

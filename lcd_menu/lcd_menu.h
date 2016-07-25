@@ -13,14 +13,17 @@
 #include <Wire.h>
 #include <pins.h>
 
-typedef enum mainMenuMode { setupJobMode, reviewJobMode, startJobMode } mainMenuMode_t;
+typedef enum mainMenuMode {
+  setupJobMode,
+  reviewJobMode,
+  startJobMode
+} mainMenuMode_t;
 
 struct stackup {
   double numberWholeLayers;
   double turnsWholeLayer;
   double turnsLastLayer;
 };
-
 
 /*
 * This is the first function to get called.
@@ -43,7 +46,7 @@ void lcdPrintCursor();
 * defaults are set.
 * If cancel is pressed, thn we just return
 * If all data is OK'd we set the relevent globals
-* It then calls calculateStackup() to calculate the 
+* It then calls calculateStackup() to calculate the
 * number of layers and turns per layer.
 */
 void newJob();
@@ -52,14 +55,13 @@ void newJob();
 * Function to calculate the number of turns per layer, the number of layers
 * and the number of turns for the last layer.
 */
-StackFloatBytes calculateStackup(double wireSize, double bobbinLength,
-                                 double turns);
-
+StackFloatBytes_t calculateStackup(double wireSize, double bobbinLength,
+                                   double turns);
 
 /*
 * Allow the user to look at the job paramters
 */
-void lcdReview(StackFloatBytes stack);
+void lcdReview(StackFloatBytes_t stack);
 
 /*
 * Do a test on the I2C.
@@ -72,8 +74,6 @@ void lcdReview(StackFloatBytes stack);
 */
 int DataStreamTest();
 
-
 int print_centered(int, char *);
-
 
 #endif

@@ -28,9 +28,13 @@ extern LiquidCrystal lcd;
 extern Button pushButton;
 extern RotaryEncoderAcelleration rotor;
 
-void startJob(Floatbyte_t wireSize, Floatbyte_t turnsTotal, Floatbyte_t spoolLength,
-              StackFloatBytes_t stackUp);
+void startJob(Floatbyte_t wireSize, Floatbyte_t turnsTotal,
+              Floatbyte_t spoolLength, StackFloatBytes_t stackUp);
 
 int confirm();
 uint8_t *doubleToData(uint8_t *dataArray, uint8_t *pparameterData);
+
+uint8_t *get_float_from_array(uint8_t *out_array, uint8_t *current_index);
+
+void updateDisplay(double total_turns);
 #endif

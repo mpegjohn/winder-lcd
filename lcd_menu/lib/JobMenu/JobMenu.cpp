@@ -3,8 +3,8 @@
 
 static long grotorPosition = 0;
 
-void startJob(Floatbyte_t wireSize, Floatbyte_t turnsTotal, Floatbyte_t spoolLength,
-              StackFloatBytes_t stackUp) {
+void startJob(Floatbyte_t wireSize, Floatbyte_t turnsTotal,
+              Floatbyte_t spoolLength, StackFloatBytes_t stackUp) {
 
   if (confirm() == 0)
     return;
@@ -50,7 +50,7 @@ void startJob(Floatbyte_t wireSize, Floatbyte_t turnsTotal, Floatbyte_t spoolLen
 
   delay(1000);
 
-  //send start
+  // send start
 
   Wire.beginTransmission(8);
 
@@ -59,81 +59,89 @@ void startJob(Floatbyte_t wireSize, Floatbyte_t turnsTotal, Floatbyte_t spoolLen
   Wire.endTransmission();
 
   updateDisplay(turnsTotal.value);
-
 }
-
 
 void updateDisplay(double total_turns) {
 
- Floatbytes_t current_layer;
- Floatbytes_t current_turns;
- Floatbytes_t current_layer_turns;
- Floatbytes_t current_speed;
- uint8_t direction;
- uint8_t running; 
+  Floatbyte_t current_layer;
+  Floatbyte_t current_turns;
+  Floatbyte_t current_layer_turns;
+  Floatbyte_t current_speed;
+  uint8_t direction;
+  uint8_t running;
 
-do(	
-  //send get status
+  do {
+    // send get status
 
-  Wire.beginTransmission(8);
+    Wire.beginTransmission(8);
 
-  Wire.write(0x3);
+    Wire.write(0x3);
 
-  Wire.endTransmission();
+    Wire.endTransmission();
 
-  delay(100);
+    delay(100);
 
-   // Listen for data from other side
-  Wire.requestFrom(8, 18);
+    // Listen for data from other side
+    Wire.requestFrom(8, 18);
 
-   uint8_t statusArray[18];
+    uint8_t statusArray[18];
 
     int i = 0;
     while (Wire.available()) {
       statusArray[i++] = Wire.read();
     }
 
-    uint8_t * status_ointer;
-    status_ointer = statusArray;
+    uint8_t *status_pointer;
+    status_pointer = statusArray;
 
-    status_pointer =
-        get_float_from_array(current_layer.bytes, status_pointer);
-    status_pointer =
-        get_float_from_array(current_turns.bytes, status_pointer);
+    status_pointer = get_float_from_array(current_layer.bytes, status_pointer);
+    status_pointer = get_float_from_array(current_turns.bytes, status_pointer);
     status_pointer =
         get_float_from_array(current_layer_turns.bytes, status_pointer);
-    status_pointer =
-        get_float_from_array(current_speed.bytes, status_pointer);
+    status_pointer = get_float_from_array(current_speed.bytes, status_pointer);
 
-    direction = * status_pointer++;
-    running = * status_pointer++;
+    direction = *status_pointer++;
+    running = *status_pointer;
 
-  lcd.print("L:      T:");
-  lcd.setCursor(0, 1);
-  lcd.print("TT%:      LT%:");
-  lcd.setCursor(0, 2);
-  lcd.print("TPS:");
+    lcd.print("L:      T:");
+    lcd.setCursor(0, 1);
+    lcd.print("TT%:      LT%:");
+    lcd.setCursor(0, 2);
+    lcd.print("TPS:");
 
     lcd.clear();
     lcd.print("Lyr:");
-    lcd.print(current_layer.value,1);
-    lsc.print(" Tps:");
-    lcd.print(current_speed.value,1);
+    lcd.print(current_layer.value, 1);
+    lcd.print(" Tps:");
+    lcd.print(current_speed.value, 1);
 
     lcd.setCursor(0, 1);
     lcd.print("Turns:");
-    lcd.print(current_turns.value,1);
+    lcd.print(current_turns.value, 1);
     lcd.print(" %:");
-
-    lcd.setCursor(0, 2);
-    
 
     double precent_turns = (current_turns.value / total_turns) * 100.0;
 
-    lcd.print( precent_turns,1);
+    lcd.print(precent_turns, 1);
+
+    lcd.setCursor(0, 2);
+    lcd.print("Running");
+
+    if (direction) {
+      lcd.print("  R to L");
+    } else {
+      lcd.print("  L to R");
+    }
 
     delay(500);
-)while(running);
+  } while (running);
+  lcd.setCursor(0, 2);
+  lcd.print("Idle                ");
+  lcd.setCursor(0, 3);
+  lcd.print(" >OK");
+  do {
+    pushButton.update();
+  } while (!pushButton.isPressed());
 
 }
 

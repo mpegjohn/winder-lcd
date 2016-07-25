@@ -1,4 +1,5 @@
-D_D7 A0
+
+#define LCD_D7 A0
 #define LCD_D6 A1
 #define LCD_D5 A2
 #define LCD_D4 A3
@@ -17,4 +18,3 @@ D_D7 A0
 
 // The warning LED
 #define LED 13
-
