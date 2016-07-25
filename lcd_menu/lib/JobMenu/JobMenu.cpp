@@ -3,8 +3,8 @@
 
 static long grotorPosition = 0;
 
-void startJob(Floatbyte wireSize, Floatbyte turnsTotal, Floatbyte spoolLength,
-              StackFloatBytes stackUp) {
+void startJob(Floatbyte_t wireSize, Floatbyte_t turnsTotal, Floatbyte_t spoolLength,
+              StackFloatBytes_t stackUp) {
 
   if (confirm() == 0)
     return;
@@ -65,11 +65,10 @@ void startJob(Floatbyte wireSize, Floatbyte turnsTotal, Floatbyte spoolLength,
 
 void updateDisplay(double total_turns) {
 
-
- Floatbytes current_layer;
- Floatbytes current_turns;
- Floatbytes current_layer_turns;
- Floatbytes current_speed;
+ Floatbytes_t current_layer;
+ Floatbytes_t current_turns;
+ Floatbytes_t current_layer_turns;
+ Floatbytes_t current_speed;
  uint8_t direction;
  uint8_t running; 
 
@@ -146,9 +145,6 @@ uint8_t *get_float_from_array(uint8_t *out_array, uint8_t *current_index) {
   }
   return current_index;
 }
-
-
-
 
 uint8_t *doubleToData(uint8_t *dataArray, uint8_t *pparameterData) {
   for (int i = 0; i < 4; i++) {

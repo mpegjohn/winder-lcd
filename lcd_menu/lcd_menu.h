@@ -11,8 +11,9 @@
 #include <TicksPerSecond.h>
 #include <ValueMenu.h>
 #include <Wire.h>
+#include <pins.h>
 
-enum mainMenuMode { setupJobMode, reviewJobMode, startJobMode };
+typedef enum mainMenuMode { setupJobMode, reviewJobMode, startJobMode } mainMenuMode_t;
 
 struct stackup {
   double numberWholeLayers;
@@ -70,5 +71,9 @@ void lcdReview(StackFloatBytes stack);
 * It expects the same data back from the other side.
 */
 int DataStreamTest();
+
+
+int print_centered(int, char *);
+
 
 #endif

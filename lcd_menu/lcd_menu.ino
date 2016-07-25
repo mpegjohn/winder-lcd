@@ -1,37 +1,19 @@
 #include <lcd_menu.h>
-/*
-* This is the main program.
+/**
+* @file lcd_menu.ino
+* @brief The deta entry and LCD display program for the first Arduino NANO.
+* 
+* @author J Wilkinson
+* @date 25/7/2016
+* 
 */
 
-// The LCD pins
-#define LCD_D7 A0
-#define LCD_D6 A1
-#define LCD_D5 A2
-#define LCD_D4 A3
-#define LCD_EN 12
-#define LCD_RS 11
-
-#define LCD_COLS 20
-#define LCD_ROWS 4
-
-// The encoder pins
-#define rotorPinA 2
-#define rotorPinB 3
-
-// the push button on the encoder
-#define buttonPin 6
-
-// The warning LED
-#define LED 13
-
-int print_centered(int, char *);
-
-static Floatbyte gwireSize;
-static Floatbyte gturnsTotal;
-static Floatbyte gspoolLength;
+static Floatbyte_t gwireSize;
+static Floatbyte_t gturnsTotal;
+static Floatbyte_t gspoolLength;
 
 static long glastRotor = 0; // The laet rotor position
-StackFloatBytes gstackup;
+StackFloatBytes_t gstackup;
 static boolean gnewJobSetup;
 
 // initialize the lcd library with the numbers of the interface pins
@@ -46,7 +28,7 @@ Button pushButton;
 
 void UpdateRotor() { rotor.update(); }
 
-mainMenuMode gmenuMode = setupJobMode;
+mainMenuMode_t gmenuMode = setupJobMode;
 
 void setup() {
   // setup LCD

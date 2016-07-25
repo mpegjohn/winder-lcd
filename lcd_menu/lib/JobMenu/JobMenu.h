@@ -16,20 +16,20 @@ enum menuSelection { cancelSelected, okSelected };
 typedef union floatbytes {
   uint8_t bytes[4];
   float value;
-} Floatbyte;
+} Floatbyte_t;
 
 typedef struct stackupFloats {
-  Floatbyte numberWholeLayers;
-  Floatbyte turnsWholeLayer;
-  Floatbyte turnsLastLayer;
-} StackFloatBytes;
+  Floatbyte_t numberWholeLayers;
+  Floatbyte_t turnsWholeLayer;
+  Floatbyte_t turnsLastLayer;
+} StackFloatBytes_t;
 
 extern LiquidCrystal lcd;
 extern Button pushButton;
 extern RotaryEncoderAcelleration rotor;
 
-void startJob(Floatbyte wireSize, Floatbyte turnsTotal, Floatbyte spoolLength,
-              StackFloatBytes stackUp);
+void startJob(Floatbyte_t wireSize, Floatbyte_t turnsTotal, Floatbyte_t spoolLength,
+              StackFloatBytes_t stackUp);
 
 int confirm();
 uint8_t *doubleToData(uint8_t *dataArray, uint8_t *pparameterData);
