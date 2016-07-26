@@ -16,7 +16,8 @@
 typedef enum mainMenuMode {
   setupJobMode,
   reviewJobMode,
-  startJobMode
+  startJobMode,
+  maunualMode
 } mainMenuMode_t;
 
 struct stackup {

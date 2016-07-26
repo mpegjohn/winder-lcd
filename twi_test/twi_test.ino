@@ -21,10 +21,16 @@ Floatbyte_t current_turns;
 Floatbyte_t current_layer_turns;
 Floatbyte_t current_speed;
 
+// Motor status byte
+// bit 0 = spool 1 = on 0 = off
+// bit 1 = sguttle 1 = on 0 = off
+
+uint8_t motor_status = 0x03; // both motors on
+
 uint8_t direction = 0;
 uint8_t running = 0;
 
-enum modes { idleMode, testMode, parameterMode, runningMode, getStatusMode };
+enum modes { idleMode, testMode, parameterMode, runningMode, getStatusMode getMotorStatusMode};
 
 modes current_mode = idleMode;
 modes request_mode = idleMode;
@@ -102,6 +108,8 @@ void requestEvent() {
 
     Wire.write(status_data, 18);
     request_mode = idleMode;
+  } else if (request_mode == getMotorStatusMode) {
+     Wire.write(motor_status, 1);
   }
 }
 
@@ -159,6 +167,12 @@ void receiveEvent(int howMany) {
   } else if (command == 0x03) // status
   {
     request_mode = getStatusMode;
+  } else if (command == 0x04) // motor status
+  {
+    request_mode = getMotorStatusMode;
+  }
+  } else if (command == 0x05) // set motor status
+   motor_status = Wire.read(); 
   }
 }
 

@@ -187,7 +187,7 @@ void printMainMenu() {
   // Print out the cursor
   lcdPrintCursor();
 
-  rotor.setMinMax(0, 2);
+  rotor.setMinMax(0, 3);
   rotor.setPosition(0);
 
   return;
@@ -211,6 +211,9 @@ void lcdMainMenu() {
         // Start the job
         startJob(gwireSize, gturnsTotal, gspoolLength, gstackup);
         printMainMenu();
+      } else if (gmenuMode == manualMode) {
+	manualMenu();
+	printMainMenu();
       }
     }
 
@@ -228,6 +231,10 @@ void lcdMainMenu() {
       };
       case 2: {
         gmenuMode = startJobMode;
+        break;
+      };
+      case 3: {
+        gmenuMode = manualMode;
         break;
       };
       }
@@ -258,6 +265,10 @@ void lcdPrintCursor() {
   }
   case startJobMode: {
     lcd.setCursor(0, 2);
+    break;
+  }
+  case manualMode: {
+    lcd.setCursor(0, 3);
     break;
   }
   }
