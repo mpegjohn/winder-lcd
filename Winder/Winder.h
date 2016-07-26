@@ -31,7 +31,7 @@ uint8_t motor_status = 0x03; // both motors on
 uint8_t direction = 0;
 uint8_t running = 0;
 
-enum modes { idleMode, testMode, parameterMode, runningMode, getStatusMode getMotorStatusMode};
+enum modes { idleMode, testMode, parameterMode, runningMode, getStatusMode, getMotorStatusMode};
 
 
 
@@ -47,5 +47,3 @@ void updateTps();
 void updateTurns();
 
 #endif
-
-

@@ -10,6 +10,9 @@ modes request_mode = idleMode;
 AccelStepper spool(AccelStepper::DRIVER, SPOOL_STEP, SPOOL_DIR);
 AccelStepper shuttle(AccelStepper::DRIVER, SHUTTLE_STEP, SHUTTLE_DIR);
 
+float spoolSpeed;
+float shuttleSpeed;
+
 uint8_t i2c_test_data[3];
 
 ISR(TIMER1_COMPA_vect){//timer1 interrupt
@@ -60,7 +63,7 @@ void loop() {
     current_layer.value = 1.0;
   }
   if (current_mode == runningMode) {
-    
+
     direction = 0;
 
 // turn on the enables for the motors
@@ -101,7 +104,11 @@ void loop() {
 
 void do_a_layer(double num_turns)
 {
-	
+  float spoolSpeed;
+  long spoolSteps;
+  float shuttleSpeed;
+  long shuttleSteps;
+
       spoolSpeed = calculateSpoolSpeed();
       spoolSteps = calculateSpoolSteps(tuns_per_layer.value);
 
@@ -133,10 +140,10 @@ void do_a_layer(double num_turns)
 			start = millis();
 		}
 
-	
 
 
-      }while((spool.distanceToGo() != 0) && (shuttle.distanceToGo() != 0))
+
+  }while((spool.distanceToGo() != 0) && (shuttle.distanceToGo() != 0));
 
 }
 
@@ -192,7 +199,7 @@ void requestEvent() {
     Wire.write(status_data, 18);
     request_mode = idleMode;
   } else if (request_mode == getMotorStatusMode) {
-     Wire.write(motor_status, 1);
+     Wire.write(motor_status);
   }
 }
 
@@ -253,11 +260,9 @@ void receiveEvent(int howMany) {
   } else if (command == 0x04) // motor status
   {
     request_mode = getMotorStatusMode;
-  }
   } else if (command == 0x05) // set motor status
   {
    motor_status = Wire.read();
- 
   }
 }
 
@@ -352,7 +357,7 @@ bool SetUpInterrupts(const int usecs)
     if(count < 65535)  // Timer 1 is 16-bits wide
       break;
     prescale *= 8;
-  } 
+  }
   while (prescale <= 1024);
   if(prescale > 1024)                 // time too long
     return false;
