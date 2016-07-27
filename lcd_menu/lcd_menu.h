@@ -7,6 +7,7 @@
 #include <Button.h>
 #include <JobMenu.h>
 #include <LiquidCrystal.h>
+#include <ManualMenu.h>
 #include <RotaryEncoderAcelleration.h>
 #include <TicksPerSecond.h>
 #include <ValueMenu.h>
@@ -17,7 +18,7 @@ typedef enum mainMenuMode {
   setupJobMode,
   reviewJobMode,
   startJobMode,
-  maunualMode
+  manualMode
 } mainMenuMode_t;
 
 struct stackup {

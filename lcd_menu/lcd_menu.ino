@@ -212,8 +212,8 @@ void lcdMainMenu() {
         startJob(gwireSize, gturnsTotal, gspoolLength, gstackup);
         printMainMenu();
       } else if (gmenuMode == manualMode) {
-	manualMenu();
-	printMainMenu();
+        manualMenu();
+        printMainMenu();
       }
     }
 

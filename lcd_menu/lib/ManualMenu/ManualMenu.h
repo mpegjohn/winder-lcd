@@ -15,13 +15,12 @@ extern LiquidCrystal lcd;
 extern Button pushButton;
 extern RotaryEncoderAcelleration rotor;
 
-
 // This menu will allow the user to manually enable or disable either motor
-void menualMenu();
+void manualMenu();
 
 // This function writes to the other nano with the set motor command, and the
 // motor_status byte;
-void setMotorStatus(unit8_t motor_status);
+void setMotorStatus(uint8_t motor_status);
 
 // Ensures the > cursor is printed in the correct place
 void lcdPrintCursor(long pos);

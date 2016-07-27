@@ -1,7 +1,7 @@
-#include <Arduino.h>
-#include <Wire.h>
 #include <AccelStepper.h>
+#include <Arduino.h>
 #include <Winder.h>
+#include <Wire.h>
 #include <pins.h>
 
 modes current_mode = idleMode;
@@ -15,9 +15,9 @@ float shuttleSpeed;
 
 uint8_t i2c_test_data[3];
 
-ISR(TIMER1_COMPA_vect){//timer1 interrupt
+ISR(TIMER1_COMPA_vect) { // timer1 interrupt
 
-    if(running) {
+  if (running) {
     spool.runSpeedToPosition();
     shuttle.runSpeedToPosition();
   }
@@ -43,7 +43,6 @@ void setup() {
   Wire.onReceive(receiveEvent); // register event
 
   SetUpInterrupts(100);
-
 }
 
 void loop() {
@@ -66,21 +65,22 @@ void loop() {
 
     direction = 0;
 
-// turn on the enables for the motors
-  digitalWrite(SPOOL_ENABLE, LOW);
-  digitalWrite(SHUTTLE_ENABLE, LOW);
-  motor_status = 0x03; // both motors on
+    // turn on the enables for the motors
+    digitalWrite(SPOOL_ENABLE, LOW);
+    digitalWrite(SHUTTLE_ENABLE, LOW);
+    motor_status = 0x03; // both motors on
 
     running = 1;
 
     // Do all the whole layers
-    for( current_layer.value = 1.0; current_layer.value <= whole_layers.value; current_layer.value = current_layer.value + 1.0){
+    for (current_layer.value = 1.0; current_layer.value <= whole_layers.value;
+         current_layer.value = current_layer.value + 1.0) {
 
-	do_a_layer(tuns_per_layer.value);
+      do_a_layer(tuns_per_layer.value);
     }
 
     // do the last layer
-    if(last_layer_turns.value > 0) {
+    if (last_layer_turns.value > 0) {
       current_layer.value = current_layer.value + 1.0;
       do_a_layer(last_layer_turns.value);
     }
@@ -89,83 +89,71 @@ void loop() {
     running = 0;
   }
 
-  if(motor_status & 0x01) {
-	digitalWrite(SPOOL_ENABLE, LOW);
+  if (motor_status & 0x01) {
+    digitalWrite(SPOOL_ENABLE, LOW);
   } else {
-        digitalWrite(SPOOL_ENABLE, HIGH);
+    digitalWrite(SPOOL_ENABLE, HIGH);
   }
-  if(motor_status & 0x02) {
-	digitalWrite(SHUTTLE_ENABLE, LOW);
+  if (motor_status & 0x02) {
+    digitalWrite(SHUTTLE_ENABLE, LOW);
   } else {
-        digitalWrite(SHUTTLE_ENABLE, HIGH);
+    digitalWrite(SHUTTLE_ENABLE, HIGH);
   }
-
 }
 
-void do_a_layer(double num_turns)
-{
+void do_a_layer(double num_turns) {
   float spoolSpeed;
   long spoolSteps;
   float shuttleSpeed;
   long shuttleSteps;
 
+  spoolSpeed = calculateSpoolSpeed();
+  spoolSteps = calculateSpoolSteps(tuns_per_layer.value);
+
+  shuttleSpeed = calculateShuttleSpeed(spoolSpeed, wire_size.value);
+  shuttleSteps = calculateShuttleSteps(wire_size.value, num_turns);
+
+  if (direction) {
+    shuttleSteps = shuttleSteps * -1;
+  }
+
+  spool.moveTo(spoolSteps);
+  shuttle.moveTo(shuttleSteps);
+
+  spool.setSpeed(spoolSpeed);
+  shuttle.setSpeed(shuttleSpeed);
+
+  unsigned long start = millis();
+
+  do {
+    // every 150 mS
+    if (millis() - start >= 250) {
       spoolSpeed = calculateSpoolSpeed();
-      spoolSteps = calculateSpoolSteps(tuns_per_layer.value);
-
       shuttleSpeed = calculateShuttleSpeed(spoolSpeed, wire_size.value);
-      shuttleSteps = calculateShuttleSteps(wire_size.value, num_turns);
-
-      if(direction) {
-	shuttleSteps = shuttleSteps * -1;
-      }
-
-      spool.moveTo(spoolSteps);
-      shuttle.moveTo(shuttleSteps);
 
       spool.setSpeed(spoolSpeed);
       shuttle.setSpeed(shuttleSpeed);
+      updateTps();
+      updateTurns();
+      start = millis();
+    }
 
-      unsigned long start = millis();
-
-      do {
-		// every 150 mS
-		if(millis() - start >= 150) {
-			spoolSpeed = calculateSpoolSpeed();
-			shuttleSpeed = calculateShuttleSpeed(spoolSpeed, wire_size.value);
-
-			spool.setSpeed(spoolSpeed);
-			shuttle.setSpeed(shuttleSpeed);
-			updateTps();
-			updateTurns();
-			start = millis();
-		}
-
-
-
-
-  }while((spool.distanceToGo() != 0) && (shuttle.distanceToGo() != 0));
-
+  } while ((spool.distanceToGo() != 0) && (shuttle.distanceToGo() != 0));
 }
 
-void updateTps()
-{
-	current_speed.value = spoolSpeed /200.0;
+void updateTps() { current_speed.value = spoolSpeed / 200.0; }
+
+void updateTurns() {
+  long pos = spool.currentPosition();
+
+  if (pos < 0)
+    pos = pos * -1;
+
+  current_layer_turns.value = ((float)pos) / 200.0;
+
+  current_turns.value = ((current_layer.value - 1.0) * tuns_per_layer.value) +
+                        current_layer_turns.value;
 }
-
-void updateTurns()
-{
-	long pos = spool.currentPosition();
-
-	if(pos < 0)
-	   pos = pos * -1;
-
-
-	current_layer_turns.value = ((float)pos) / 200.0;
-
-	current_turns.value = ((current_layer.value - 1.0) * tuns_per_layer.value) + current_layer_turns.value;
-
-}
-
 
 void requestEvent() {
   if (current_mode == testMode) {
@@ -199,7 +187,7 @@ void requestEvent() {
     Wire.write(status_data, 18);
     request_mode = idleMode;
   } else if (request_mode == getMotorStatusMode) {
-     Wire.write(motor_status);
+    Wire.write(motor_status);
   }
 }
 
@@ -262,7 +250,7 @@ void receiveEvent(int howMany) {
     request_mode = getMotorStatusMode;
   } else if (command == 0x05) // set motor status
   {
-   motor_status = Wire.read();
+    motor_status = Wire.read();
   }
 }
 
@@ -301,18 +289,17 @@ uint8_t CRC8(const uint8_t *data, uint8_t len) {
   return crc;
 }
 
-float calculateSpoolSpeed()
-{
+float calculateSpoolSpeed() {
   static int analog_value;
   // Now read the pot (from 0 to 1023)
   analog_value = analogRead(SPEED_PIN);
   //  And scale the pot's value from min to max speeds
-  float spoolSpeed = ((analog_value/1023.0) * (MAX_SPEED - MIN_SPEED)) + MIN_SPEED;
+  float spoolSpeed =
+      ((analog_value / 1023.0) * (MAX_SPEED - MIN_SPEED)) + MIN_SPEED;
   return spoolSpeed;
 }
 
-float calculateShuttleSpeed(float spoolSpeed, float wireSize)
-{
+float calculateShuttleSpeed(float spoolSpeed, float wireSize) {
   float shuttleSpeed = wireSize * spoolSpeed;
 
   return shuttleSpeed;
@@ -330,41 +317,38 @@ long calculateSpoolSteps(int numberTurns) {
   return spoolSteps;
 }
 
-
 /*****************************************************************************
  ** SetUpInterrupts
  ** ===============
  * Set up interrupt routine to service stepper motor run() function.
  */
-bool SetUpInterrupts(const int usecs)
-{
+bool SetUpInterrupts(const int usecs) {
   // initialize Timer1
-  cli();          // disable global interrupts
-  TCCR1A = 0;     // set entire TCCR1A register to 0
-  TCCR1B = 0;     // same for TCCR1B
+  cli();      // disable global interrupts
+  TCCR1A = 0; // set entire TCCR1A register to 0
+  TCCR1B = 0; // same for TCCR1B
 
   // set compare match register to desired timer count (1ms):
   // ATmega328 with a 16MHz clock, clk/8
   // (# timer counts + 1) = (target time) / (timer resolution)
   //                      =     .0001s      /   6.25e-8 s  * 8
   //                      =   200
-  const float targetSecs = ((float) usecs) / 1e6;
-  const float timerSteps = 6.25e-8;                //    1/16MHz
+  const float targetSecs = ((float)usecs) / 1e6;
+  const float timerSteps = 6.25e-8; //    1/16MHz
   int count = 0;
-  int prescale = 1;  // valid values: 1, 8, 64, 256, 1024
-  do  {
+  int prescale = 1; // valid values: 1, 8, 64, 256, 1024
+  do {
     count = targetSecs / (timerSteps * prescale);
-    if(count < 65535)  // Timer 1 is 16-bits wide
+    if (count < 65535) // Timer 1 is 16-bits wide
       break;
     prescale *= 8;
-  }
-  while (prescale <= 1024);
-  if(prescale > 1024)                 // time too long
+  } while (prescale <= 1024);
+  if (prescale > 1024) // time too long
     return false;
-  if(prescale == 1 && count < 100)    // time too short
+  if (prescale == 1 && count < 100) // time too short
     return false;
 
-  OCR1A = count;         // Eg, 200 = 0.1ms - I found 1ms gives rough acceleration
+  OCR1A = count; // Eg, 200 = 0.1ms - I found 1ms gives rough acceleration
   // turn on CTC mode (Clear Timer on Compare Match):
   TCCR1B |= (1 << WGM12);
   // Set CS10 and CS12 bits for 1024 prescaler:
@@ -377,21 +361,21 @@ bool SetUpInterrupts(const int usecs)
   //   1      0      1   clk/1024
   //   1      1      0   external clock on T1 pin, falling edge
   //   1      1      1   external clock on T1 pin, rising edge
-  switch(prescale)  {
+  switch (prescale) {
   case 1:
-    TCCR1B |= (1 << CS10);                   // 0 0 1
+    TCCR1B |= (1 << CS10); // 0 0 1
     break;
   case 8:
-    TCCR1B |= (1 << CS11);                   // 0 1 0
+    TCCR1B |= (1 << CS11); // 0 1 0
     break;
   case 64:
-    TCCR1B |= (1 << CS11) & (1 << CS10);     // 0 1 1
+    TCCR1B |= (1 << CS11) & (1 << CS10); // 0 1 1
     break;
   case 256:
-    TCCR1B |= (1 << CS12);                   // 1 0 0
+    TCCR1B |= (1 << CS12); // 1 0 0
     break;
   case 1024:
-    TCCR1B |= (1 << CS12) & (1 << CS10);     // 1 0 1
+    TCCR1B |= (1 << CS12) & (1 << CS10); // 1 0 1
     break;
   }
   // enable timer compare interrupt:
@@ -401,7 +385,6 @@ bool SetUpInterrupts(const int usecs)
 
   return true;
 }
-
 
 void printDouble(double val, uint8_t precision) {
   // prints val with number of decimal places determine by precision
