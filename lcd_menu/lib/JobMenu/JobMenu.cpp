@@ -9,14 +9,6 @@ void startJob(Floatbyte_t wireSize, Floatbyte_t turnsTotal,
   if (confirm() == 0)
     return;
 
-  lcd.clear();
-
-  lcd.print("L:      T:");
-  lcd.setCursor(0, 1);
-  lcd.print("TT%:      LT%:");
-  lcd.setCursor(0, 2);
-  lcd.print("TPS:");
-
   // Send job parameters to the other UNO
   // [0x1] -- Mode 1 comand job paremeters
   // [4 bytes] -- wire size
@@ -103,12 +95,6 @@ void updateDisplay(double total_turns) {
     direction = *status_pointer++;
     running = *status_pointer;
 
-    lcd.print("L:      T:");
-    lcd.setCursor(0, 1);
-    lcd.print("TT%:      LT%:");
-    lcd.setCursor(0, 2);
-    lcd.print("TPS:");
-
     lcd.clear();
     lcd.print("Lyr:");
     lcd.print(current_layer.value, 1);
@@ -119,10 +105,12 @@ void updateDisplay(double total_turns) {
     lcd.print("Turns:");
     lcd.print(current_turns.value, 1);
     lcd.print(" %:");
+    // lcd.print("tgt:");
 
-    double precent_turns = (current_turns.value / total_turns) * 100.0;
+    double percent_turns = (current_turns.value / total_turns) * 100.0;
 
-    lcd.print(precent_turns, 1);
+    lcd.print(percent_turns, 1);
+    // lcd.print(total_turns, 1);
 
     lcd.setCursor(0, 2);
     lcd.print("Running");
@@ -142,7 +130,6 @@ void updateDisplay(double total_turns) {
   do {
     pushButton.update();
   } while (!pushButton.isPressed());
-
 }
 
 uint8_t *get_float_from_array(uint8_t *out_array, uint8_t *current_index) {
@@ -171,8 +158,6 @@ int confirm() {
   rotor.setMinMax(0, 1);
   rotor.setPosition(0);
 
-  menuSelection selection;
-
   while (1) {
     pushButton.update();
     if (pushButton.isPressed()) {
@@ -188,13 +173,11 @@ int confirm() {
       if (pos == 0) {
         lcd.setCursor(14, 3);
         lcd.print(" ");
-        lcd.setCursor(2, 3);
-        selection = cancelSelected;
+        lcd.setCursor(1, 3);
       } else {
-        lcd.setCursor(2, 3);
+        lcd.setCursor(1, 3);
         lcd.print(" ");
         lcd.setCursor(14, 3);
-        selection = okSelected;
       }
       lcd.print(">");
     }

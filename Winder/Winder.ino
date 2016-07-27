@@ -1,8 +1,5 @@
-#include <AccelStepper.h>
-#include <Arduino.h>
+
 #include <Winder.h>
-#include <Wire.h>
-#include <pins.h>
 
 modes current_mode = idleMode;
 modes request_mode = idleMode;
@@ -76,7 +73,7 @@ void loop() {
     for (current_layer.value = 1.0; current_layer.value <= whole_layers.value;
          current_layer.value = current_layer.value + 1.0) {
 
-      do_a_layer(tuns_per_layer.value);
+      do_a_layer(turns_per_layer.value);
     }
 
     // do the last layer
@@ -102,13 +99,12 @@ void loop() {
 }
 
 void do_a_layer(double num_turns) {
-  float spoolSpeed;
+
   long spoolSteps;
-  float shuttleSpeed;
   long shuttleSteps;
 
   spoolSpeed = calculateSpoolSpeed();
-  spoolSteps = calculateSpoolSteps(tuns_per_layer.value);
+  spoolSteps = calculateSpoolSteps(num_turns);
 
   shuttleSpeed = calculateShuttleSpeed(spoolSpeed, wire_size.value);
   shuttleSteps = calculateShuttleSteps(wire_size.value, num_turns);
@@ -151,8 +147,10 @@ void updateTurns() {
 
   current_layer_turns.value = ((float)pos) / 200.0;
 
-  current_turns.value = ((current_layer.value - 1.0) * tuns_per_layer.value) +
-                        current_layer_turns.value;
+  //  current_turns.value = ((current_layer.value - 1.0) *
+  //  turns_per_layer.value) +
+  //                        current_layer_turns.value;
+  current_turns.value = current_layer_turns.value;
 }
 
 void requestEvent() {
@@ -232,7 +230,7 @@ void receiveEvent(int howMany) {
     parameters_pointer =
         get_float_from_array(spool_length.bytes, parameters_pointer);
     parameters_pointer =
-        get_float_from_array(tuns_per_layer.bytes, parameters_pointer);
+        get_float_from_array(turns_per_layer.bytes, parameters_pointer);
     parameters_pointer =
         get_float_from_array(whole_layers.bytes, parameters_pointer);
     parameters_pointer =

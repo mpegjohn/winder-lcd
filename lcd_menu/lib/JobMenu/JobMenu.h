@@ -11,7 +11,7 @@
 #define LCD_COLS 20
 #define LCD_ROWS 4
 
-enum menuSelection { cancelSelected, okSelected };
+typedef enum menuSelection { cancelSelected, okSelected } menuSelection_t;
 
 typedef union floatbytes {
   uint8_t bytes[4];
