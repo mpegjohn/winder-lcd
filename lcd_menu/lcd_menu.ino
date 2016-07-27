@@ -182,6 +182,8 @@ void printMainMenu() {
   lcd.setCursor(1, 1);
   lcd.print("Review job");
   lcd.setCursor(1, 2);
+  lcd.print("Manual Motor Control");
+  lcd.setCursor(1, 3);
   lcd.print("Start");
 
   // Print out the cursor
@@ -230,11 +232,11 @@ void lcdMainMenu() {
         break;
       };
       case 2: {
-        gmenuMode = startJobMode;
+        gmenuMode = manualMode;
         break;
       };
       case 3: {
-        gmenuMode = manualMode;
+        gmenuMode = startJobMode;
         break;
       };
       }
@@ -263,11 +265,11 @@ void lcdPrintCursor() {
     lcd.setCursor(0, 1);
     break;
   }
-  case startJobMode: {
+  case manualMode: {
     lcd.setCursor(0, 2);
     break;
   }
-  case manualMode: {
+  case startJobMode: {
     lcd.setCursor(0, 3);
     break;
   }

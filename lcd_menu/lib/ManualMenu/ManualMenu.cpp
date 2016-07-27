@@ -75,8 +75,9 @@ void setMotorStatus(uint8_t motor_status) {
 // Decide which cursor position to clear based on the current menu
 void lcdPrintCursor(long pos) {
 
+  int i;
   // Clear all >
-  for (int i = 0; i < 4; i++) {
+  for (i = 1; i < 4; i++) {
     lcd.setCursor(0, i);
     lcd.print(" ");
   }
@@ -84,15 +85,15 @@ void lcdPrintCursor(long pos) {
   // Display the > at the correct line
   switch (pos) {
   case 0: { // spool
-    lcd.setCursor(0, 0);
-    break;
-  }
-  case 1: { // shuttle
     lcd.setCursor(0, 1);
     break;
   }
-  case 2: { // OK
+  case 1: { // shuttle
     lcd.setCursor(0, 2);
+    break;
+  }
+  case 2: { // OK
+    lcd.setCursor(0, 3);
     break;
   }
   }
