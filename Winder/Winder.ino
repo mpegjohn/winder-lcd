@@ -74,7 +74,15 @@ void loop() {
 
     // Do all the whole layers
     for (layer_count = 0; layer_count < num_layers; layer_countr++) {
+
       this_layer++
+
+      #ifdef SERIAL_DEBUG
+         Serial.print("this layer = ");
+	 Serial.print(this_layer,DEC);
+	 Serial.print("\n");
+      #endif
+
       do_a_layer(turns_per_layer.value);
       direction = direction ^ 1;
     }
@@ -111,6 +119,16 @@ void do_a_layer(double num_turns) {
 
   shuttleSpeed = calculateShuttleSpeed(spoolSpeed, wire_size.value);
   shuttleSteps = calculateShuttleSteps(wire_size.value, num_turns);
+
+      #ifdef SERIAL_DEBUG
+         Serial.print("spool steps = ");
+	 Serial.print(spoolSteps,DEC);
+	 Serial.print("\n");
+         Serial.print("shuttle steps = ");
+	 Serial.print(shuttleSteps,DEC);
+	 Serial.print("\n");
+
+      #endif
 
   if (direction) {
     shuttleSteps = shuttleSteps * -1;
@@ -155,6 +173,16 @@ void updateTurns() {
   current_layer_turns.value = temp_turns;
 
   current_turns.value += delta_turns;
+
+      #ifdef SERIAL_DEBUG
+         Serial.print("temp_turns = ");
+	 printDouble(temp_turns,1);
+	 Serial.print("\n");
+         Serial.print("delta_turns = ");
+	 printDouble(delta_turns, 1);
+	 Serial.print("\n");
+
+      #endif
 }
 
 void requestEvent() {

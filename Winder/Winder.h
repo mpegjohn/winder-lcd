@@ -11,7 +11,7 @@
 #define MAX_SPEED 500
 #define MIN_SPEED 1
 
-#define DEBUG true
+#define SERIAL_DEBUG
 
 typedef union floatbytes {
   float value;
