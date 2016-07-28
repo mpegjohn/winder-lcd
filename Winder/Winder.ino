@@ -114,6 +114,8 @@ void do_a_layer(double num_turns) {
   long spoolSteps;
   long shuttleSteps;
 
+  current_layer_turns.value = 0.0;
+
   spoolSpeed = calculateSpoolSpeed();
   spoolSteps = calculateSpoolSteps(num_turns);
 
