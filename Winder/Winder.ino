@@ -69,16 +69,19 @@ void loop() {
 
     running = 1;
 
-    // Do all the whole layers
-    for (current_layer.value = 1.0; current_layer.value <= whole_layers.value;
-         current_layer.value = current_layer.value + 1.0) {
+    int layer_count;
+    int this_layer = 0;
 
+    // Do all the whole layers
+    for (layer_count = 0; layer_count < num_layers; layer_countr++) {
+      this_layer++
       do_a_layer(turns_per_layer.value);
+      direction = direction ^ 1;
     }
 
     // do the last layer
     if (last_layer_turns.value > 0) {
-      current_layer.value = current_layer.value + 1.0;
+      this_layer++;
       do_a_layer(last_layer_turns.value);
     }
 
@@ -123,7 +126,7 @@ void do_a_layer(double num_turns) {
 
   do {
     // every 150 mS
-    if (millis() - start >= 250) {
+    if ((millis() - start) >= 250) {
       spoolSpeed = calculateSpoolSpeed();
       shuttleSpeed = calculateShuttleSpeed(spoolSpeed, wire_size.value);
 
@@ -145,15 +148,19 @@ void updateTurns() {
   if (pos < 0)
     pos = pos * -1;
 
-  current_layer_turns.value = ((float)pos) / 200.0;
+  float temp_turns = ((float)pos) / 200.0;
 
-  //  current_turns.value = ((current_layer.value - 1.0) *
-  //  turns_per_layer.value) +
-  //                        current_layer_turns.value;
-  current_turns.value = current_layer_turns.value;
+  float delta_turns = temp_turns - current_layer_turns.value;
+
+  current_layer_turns.value = temp_turns;
+
+  current_turns.value += delta_turns;
 }
 
 void requestEvent() {
+
+  Floatbyte_t current_layer;
+
   if (current_mode == testMode) {
     Wire.write(i2c_test_data, 3);
     current_mode = idleMode;
@@ -170,6 +177,8 @@ void requestEvent() {
 
     uint8_t *status_data_pointer;
     status_data_pointer = status_data;
+
+    current_layer.value = (float)this_layer;
 
     status_data_pointer =
         doubleToData(current_layer.bytes, status_data_pointer);
@@ -192,6 +201,8 @@ void requestEvent() {
 // function that executes whenever data is received from master
 // this function is registered as an event, see setup()
 void receiveEvent(int howMany) {
+  Floatbyte_t whole_layers;
+
   uint8_t command = Wire.read();
   if (command == 0x00) // I2C test
   {
@@ -235,6 +246,8 @@ void receiveEvent(int howMany) {
         get_float_from_array(whole_layers.bytes, parameters_pointer);
     parameters_pointer =
         get_float_from_array(last_layer_turns.bytes, parameters_pointer);
+
+   num_layers = (int)whole_layers.value
 
     current_mode = parameterMode;
   } else if ((command == 0x02) && (current_mode == parameterMode)) // start
