@@ -1,6 +1,8 @@
 
 #include <Winder.h>
 
+boolean print_data = true;
+
 modes current_mode = idleMode;
 modes request_mode = idleMode;
 
@@ -44,7 +46,8 @@ void setup() {
 
 void loop() {
 
-  if (current_mode == parameterMode) {
+#ifdef SERIAL_DEBUG
+  if ((current_mode == parameterMode) && print_data) {
     Serial.print("Wire size: ");
     printDouble(wire_size.value, 2);
     Serial.print("\n");
@@ -55,9 +58,10 @@ void loop() {
     Serial.print("spool length: ");
     printDouble(spool_length.value, 2);
     Serial.print("\n");
-    running = 1;
-    current_layer.value = 1.0;
+    print_data = false;
   }
+#endif
+
   if (current_mode == runningMode) {
 
     direction = 0;
@@ -70,18 +74,19 @@ void loop() {
     running = 1;
 
     int layer_count;
-    int this_layer = 0;
+    this_layer = 0;
 
     // Do all the whole layers
-    for (layer_count = 0; layer_count < num_layers; layer_countr++) {
+    for (layer_count = 0; layer_count < num_layers; layer_count++) {
 
-      this_layer++
+      this_layer++;
 
-      #ifdef SERIAL_DEBUG
-         Serial.print("this layer = ");
-	 Serial.print(this_layer,DEC);
-	 Serial.print("\n");
-      #endif
+#ifdef SERIAL_DEBUG
+      Serial.print("In multiple layers\n");
+      Serial.print("this layer = ");
+      Serial.print(this_layer, DEC);
+      Serial.print("\n");
+#endif
 
       do_a_layer(turns_per_layer.value);
       direction = direction ^ 1;
@@ -90,6 +95,12 @@ void loop() {
     // do the last layer
     if (last_layer_turns.value > 0) {
       this_layer++;
+#ifdef SERIAL_DEBUG
+      Serial.print("In last layer\n");
+      Serial.print("this layer = ");
+      Serial.print(this_layer, DEC);
+      Serial.print("\n");
+#endif
       do_a_layer(last_layer_turns.value);
     }
 
@@ -116,24 +127,29 @@ void do_a_layer(double num_turns) {
 
   current_layer_turns.value = 0.0;
 
+  running = 0;
+  spool.setCurrentPosition(0);
+  shuttle.setCurrentPosition(0);
+
   spoolSpeed = calculateSpoolSpeed();
   spoolSteps = calculateSpoolSteps(num_turns);
 
   shuttleSpeed = calculateShuttleSpeed(spoolSpeed, wire_size.value);
   shuttleSteps = calculateShuttleSteps(wire_size.value, num_turns);
 
-      #ifdef SERIAL_DEBUG
-         Serial.print("spool steps = ");
-	 Serial.print(spoolSteps,DEC);
-	 Serial.print("\n");
-         Serial.print("shuttle steps = ");
-	 Serial.print(shuttleSteps,DEC);
-	 Serial.print("\n");
+#ifdef SERIAL_DEBUG
+  Serial.print("spool steps = ");
+  Serial.print(spoolSteps, DEC);
+  Serial.print("\n");
+  Serial.print("shuttle steps = ");
+  Serial.print(shuttleSteps, DEC);
+  Serial.print("\n");
 
-      #endif
+#endif
 
   if (direction) {
     shuttleSteps = shuttleSteps * -1;
+    shuttleSpeed = shuttleSpeed * -1.0;
   }
 
   spool.moveTo(spoolSteps);
@@ -141,6 +157,7 @@ void do_a_layer(double num_turns) {
 
   spool.setSpeed(spoolSpeed);
   shuttle.setSpeed(shuttleSpeed);
+  running = 1;
 
   unsigned long start = millis();
 
@@ -150,14 +167,16 @@ void do_a_layer(double num_turns) {
       spoolSpeed = calculateSpoolSpeed();
       shuttleSpeed = calculateShuttleSpeed(spoolSpeed, wire_size.value);
 
-      spool.setSpeed(spoolSpeed);
-      shuttle.setSpeed(shuttleSpeed);
+      // spool.setSpeed(spoolSpeed);
+      // shuttle.setSpeed(shuttleSpeed);
       updateTps();
       updateTurns();
       start = millis();
     }
 
-  } while ((spool.distanceToGo() != 0) && (shuttle.distanceToGo() != 0));
+  } while ((spool.distanceToGo() != 0) || (shuttle.distanceToGo() != 0));
+  updateTps();
+  updateTurns();
 }
 
 void updateTps() { current_speed.value = spoolSpeed / 200.0; }
@@ -176,15 +195,17 @@ void updateTurns() {
 
   current_turns.value += delta_turns;
 
-      #ifdef SERIAL_DEBUG
-         Serial.print("temp_turns = ");
-	 printDouble(temp_turns,1);
-	 Serial.print("\n");
-         Serial.print("delta_turns = ");
-	 printDouble(delta_turns, 1);
-	 Serial.print("\n");
-
-      #endif
+#ifdef SERIAL_DEBUG
+  Serial.print("temp_turns = ");
+  printDouble(temp_turns, 1);
+  Serial.print("\n");
+  Serial.print("delta_turns = ");
+  printDouble(delta_turns, 1);
+  Serial.print("\n");
+  Serial.print("current_turns = ");
+  printDouble(current_turns.value, 1);
+  Serial.print("\n");
+#endif
 }
 
 void requestEvent() {
@@ -208,7 +229,7 @@ void requestEvent() {
     uint8_t *status_data_pointer;
     status_data_pointer = status_data;
 
-    current_layer.value = (float)this_layer;
+    current_layer.value = float(this_layer);
 
     status_data_pointer =
         doubleToData(current_layer.bytes, status_data_pointer);
@@ -277,7 +298,7 @@ void receiveEvent(int howMany) {
     parameters_pointer =
         get_float_from_array(last_layer_turns.bytes, parameters_pointer);
 
-   num_layers = (int)whole_layers.value
+    num_layers = (int)whole_layers.value;
 
     current_mode = parameterMode;
   } else if ((command == 0x02) && (current_mode == parameterMode)) // start
