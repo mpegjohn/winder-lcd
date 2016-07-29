@@ -129,7 +129,7 @@ void do_a_layer(double num_turns) {
 
   running = 0;
   spool.setCurrentPosition(0);
-  shuttle.setCurrentPosition(0);
+//  shuttle.setCurrentPosition(0);
 
   spoolSpeed = calculateSpoolSpeed();
   spoolSteps = calculateSpoolSteps(num_turns);
@@ -148,12 +148,13 @@ void do_a_layer(double num_turns) {
 #endif
 
   if (direction) {
-    shuttleSteps = shuttleSteps * -1;
+ //   shuttleSteps = shuttleSteps * -1;
+   shuttle.moveTo(0); 
     shuttleSpeed = shuttleSpeed * -1.0;
   }
 
   spool.moveTo(spoolSteps);
-  shuttle.moveTo(shuttleSteps);
+  //shuttle.moveTo(shuttleSteps);
 
   spool.setSpeed(spoolSpeed);
   shuttle.setSpeed(shuttleSpeed);
@@ -313,6 +314,14 @@ void receiveEvent(int howMany) {
   } else if (command == 0x05) // set motor status
   {
     motor_status = Wire.read();
+  } else if (command == 0x06) // pause state
+  {
+    current_mode = pauseMode;
+    running = 0;
+  } else if (command == 0x07) // continue state 
+  {
+    current_mode = runningMode;
+    running = 1;
   }
 }
 
