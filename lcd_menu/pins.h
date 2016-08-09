@@ -14,7 +14,7 @@
 #define rotorPinB 3
 
 // the push button on the encoder
-#define buttonPin 6
+#define buttonPin 4
 
 // The warning LED
 #define LED 13

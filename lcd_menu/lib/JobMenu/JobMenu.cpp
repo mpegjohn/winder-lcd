@@ -115,10 +115,13 @@ void updateDisplay(double total_turns) {
     lcd.setCursor(0, 2);
     lcd.print("Running");
 
+    lcd.print("  ");
     if (direction) {
-      lcd.print("  R to L");
+      // lcd.print("  R to L");
+      lcd.print(0x8c);
     } else {
-      lcd.print("  L to R");
+      // lcd.print("  L to R");
+      lcd.print(0x7c);
     }
 
     delay(500);
