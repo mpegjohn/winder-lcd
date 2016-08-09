@@ -149,7 +149,7 @@ void do_a_layer(double num_turns) {
 
   if (direction) {
      // If we change direction reset the position to 0
-     shuttle.moveTo(0); 
+     shuttle.moveTo(0);
   }
   else {
         // Set the shuttle to move to the calculated position
@@ -249,6 +249,10 @@ void requestEvent() {
     request_mode = idleMode;
   } else if (request_mode == getMotorStatusMode) {
     Wire.write(motor_status);
+  } else if (request_mode == getVersion) {
+    Wire.write(git_sha, sizeof(git_sha));
+  } else if (request_mode == getDate) {
+    Wire.write(build_date, sizeof(build_date));
   }
 }
 
@@ -320,10 +324,14 @@ void receiveEvent(int howMany) {
   {
     current_mode = pauseMode;
     running = 0;
-  } else if (command == 0x07) // continue state 
+  } else if (command == 0x07) // continue state
   {
     current_mode = runningMode;
     running = 1;
+  } else if (command == 0x08) { // get version
+    request_mode = getVersion;
+  } else if (command == 0x09) { // get DATE
+    request_mode = getDate;
   }
 }
 

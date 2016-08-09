@@ -6,6 +6,8 @@
 #include <Winder.h>
 #include <Wire.h>
 #include <pins.h>
+#include "version.h"
+
 
 // Define our maximum and minimum speed in steps per second (scale pot to these)
 #define MAX_SPEED 500
@@ -55,6 +57,8 @@ enum modes {
   runningMode,
   getStatusMode,
   getMotorStatusMode,
+  getVersion,
+  getDate,
   pauseMode
 };
 
