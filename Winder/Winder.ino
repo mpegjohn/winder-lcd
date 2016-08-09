@@ -148,13 +148,15 @@ void do_a_layer(double num_turns) {
 #endif
 
   if (direction) {
- //   shuttleSteps = shuttleSteps * -1;
-   shuttle.moveTo(0); 
-    shuttleSpeed = shuttleSpeed * -1.0;
+     // If we change direction reset the position to 0
+     shuttle.moveTo(0); 
+  }
+  else {
+        // Set the shuttle to move to the calculated position
+	shuttle.moveTo(shuttleSteps);
   }
 
   spool.moveTo(spoolSteps);
-  //shuttle.moveTo(shuttleSteps);
 
   spool.setSpeed(spoolSpeed);
   shuttle.setSpeed(shuttleSpeed);
