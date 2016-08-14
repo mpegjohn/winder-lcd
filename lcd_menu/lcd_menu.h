@@ -21,12 +21,6 @@ typedef enum mainMenuMode {
   manualMode
 } mainMenuMode_t;
 
-struct stackup {
-  double numberWholeLayers;
-  double turnsWholeLayer;
-  double turnsLastLayer;
-};
-
 /*
 * This is the first function to get called.
 * It displays the main menu of
@@ -75,7 +69,5 @@ void lcdReview(StackFloatBytes_t stack);
 * It expects the same data back from the other side.
 */
 int DataStreamTest();
-
-int print_centered(int, char *);
 
 #endif

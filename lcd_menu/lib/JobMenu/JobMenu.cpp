@@ -15,10 +15,10 @@ void startJob(Floatbyte_t wireSize, Floatbyte_t turnsTotal,
   // [4 bytes] -- Total turns
   // [4 bytes ] -- spool length
   // [4 bytes ] -- Turns per layer
-  // [4 bytes ] -- Number of whole layers
+  // [1 byte ] -- Number of whole layers
   // [4 bytes ] -- Turns last layer
 
-  uint8_t parameterData[25] = {};
+  uint8_t parameterData[22] = {};
 
   uint8_t *pparameterData;
 
@@ -30,13 +30,14 @@ void startJob(Floatbyte_t wireSize, Floatbyte_t turnsTotal,
   pparameterData = doubleToData(turnsTotal.bytes, pparameterData);
   pparameterData = doubleToData(spoolLength.bytes, pparameterData);
   pparameterData = doubleToData(stackUp.turnsWholeLayer.bytes, pparameterData);
-  pparameterData =
-      doubleToData(stackUp.numberWholeLayers.bytes, pparameterData);
+
+  *pparameterData++ = stackUp.numberWholeLayers;
+
   pparameterData = doubleToData(stackUp.turnsLastLayer.bytes, pparameterData);
 
   Wire.beginTransmission(8); // transmit to device #8
 
-  Wire.write(parameterData, 25);
+  Wire.write(parameterData, 22);
 
   Wire.endTransmission();
 
@@ -55,7 +56,7 @@ void startJob(Floatbyte_t wireSize, Floatbyte_t turnsTotal,
 
 void updateDisplay(double total_turns) {
 
-  Floatbyte_t current_layer;
+  uint8_t current_layer;
   Floatbyte_t current_turns;
   Floatbyte_t current_layer_turns;
   Floatbyte_t current_speed;
@@ -74,9 +75,9 @@ void updateDisplay(double total_turns) {
     delay(100);
 
     // Listen for data from other side
-    Wire.requestFrom(8, 18);
+    Wire.requestFrom(8, 15);
 
-    uint8_t statusArray[18];
+    uint8_t statusArray[15];
 
     int i = 0;
     while (Wire.available()) {
@@ -86,7 +87,8 @@ void updateDisplay(double total_turns) {
     uint8_t *status_pointer;
     status_pointer = statusArray;
 
-    status_pointer = get_float_from_array(current_layer.bytes, status_pointer);
+    current_layer = *status_pointer++;
+
     status_pointer = get_float_from_array(current_turns.bytes, status_pointer);
     status_pointer =
         get_float_from_array(current_layer_turns.bytes, status_pointer);
@@ -97,7 +99,7 @@ void updateDisplay(double total_turns) {
 
     lcd.clear();
     lcd.print("Lyr:");
-    lcd.print(current_layer.value, 1);
+    lcd.print(current_layer);
     lcd.print(" Tps:");
     lcd.print(current_speed.value, 1);
 

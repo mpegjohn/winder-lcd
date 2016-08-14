@@ -19,7 +19,7 @@ typedef union floatbytes {
 } Floatbyte_t;
 
 typedef struct stackupFloats {
-  Floatbyte_t numberWholeLayers;
+  uint8_t numberWholeLayers;
   Floatbyte_t turnsWholeLayer;
   Floatbyte_t turnsLastLayer;
 } StackFloatBytes_t;

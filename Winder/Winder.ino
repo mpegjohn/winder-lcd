@@ -84,7 +84,7 @@ void loop() {
 #ifdef SERIAL_DEBUG
       Serial.print("In multiple layers\n");
       Serial.print("this layer = ");
-      Serial.print(this_layer, DEC);
+      Serial.print(this_layer);
       Serial.print("\n");
 #endif
 
@@ -98,7 +98,7 @@ void loop() {
 #ifdef SERIAL_DEBUG
       Serial.print("In last layer\n");
       Serial.print("this layer = ");
-      Serial.print(this_layer, DEC);
+      Serial.print(this_layer);
       Serial.print("\n");
 #endif
       do_a_layer(last_layer_turns.value);
@@ -216,8 +216,6 @@ void updateTurns() {
 
 void requestEvent() {
 
-  Floatbyte_t current_layer;
-
   if (current_mode == testMode) {
     Wire.write(i2c_test_data, 3);
     current_mode = idleMode;
@@ -230,25 +228,23 @@ void requestEvent() {
     //[1 byte] direction 1 = L to R, 0 = R to L
     //[1 byte] running 1 = running, 0 - stopped
 
-    uint8_t status_data[18];
+    uint8_t status_data[15];
 
     uint8_t *status_data_pointer;
     status_data_pointer = status_data;
 
-    current_layer.value = float(this_layer);
+    *status_data_pointer++ = this_layer;
 
-    status_data_pointer =
-        doubleToData(current_layer.bytes, status_data_pointer);
     status_data_pointer =
         doubleToData(current_turns.bytes, status_data_pointer);
     status_data_pointer =
         doubleToData(current_layer_turns.bytes, status_data_pointer);
     status_data_pointer =
         doubleToData(current_speed.bytes, status_data_pointer);
-    status_data[16] = direction;
-    status_data[17] = running;
+    status_data[13] = direction;
+    status_data[14] = running;
 
-    Wire.write(status_data, 18);
+    Wire.write(status_data, 15);
     request_mode = idleMode;
   } else if (request_mode == getMotorStatusMode) {
     Wire.write(motor_status);
@@ -262,7 +258,6 @@ void requestEvent() {
 // function that executes whenever data is received from master
 // this function is registered as an event, see setup()
 void receiveEvent(int howMany) {
-  Floatbyte_t whole_layers;
 
   uint8_t command = Wire.read();
   if (command == 0x00) // I2C test
@@ -280,12 +275,10 @@ void receiveEvent(int howMany) {
     // [4 bytes] -- Total turns
     // [4 bytes ] -- spool length
     // [4 bytes ] -- Turns per layer
-    // [4 bytes ] -- Number of whole layers
+    // [1 byte ] -- Number of whole layers
     // [4 bytes ] -- Turns last layer
 
-    Serial.print("New job perameters received \n");
-
-    uint8_t parameters[24];
+    uint8_t parameters[21];
 
     uint8_t *parameters_pointer;
 
@@ -303,12 +296,11 @@ void receiveEvent(int howMany) {
         get_float_from_array(spool_length.bytes, parameters_pointer);
     parameters_pointer =
         get_float_from_array(turns_per_layer.bytes, parameters_pointer);
-    parameters_pointer =
-        get_float_from_array(whole_layers.bytes, parameters_pointer);
+
+    num_layers = *parameters_pointer++;
+
     parameters_pointer =
         get_float_from_array(last_layer_turns.bytes, parameters_pointer);
-
-    num_layers = (int)whole_layers.value;
 
     current_mode = parameterMode;
   } else if ((command == 0x02) && (current_mode == parameterMode)) // start

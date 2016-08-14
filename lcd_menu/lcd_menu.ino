@@ -135,7 +135,7 @@ StackFloatBytes_t calculateStackup(double wireSize, double bobbinLength,
 
   fractional = modf(layers, &wholeLayers);
 
-  newStack.numberWholeLayers.value = wholeLayers;
+  newStack.numberWholeLayers = (uint8_t)wholeLayers;
   newStack.turnsWholeLayer.value = turnsPerLayer;
   newStack.turnsLastLayer.value = fractional * (double)turnsPerLayer;
 
@@ -157,7 +157,7 @@ void lcdReview(StackFloatBytes_t stack) {
 
   lcd.setCursor(0, 2);
   lcd.print("Stk:");
-  lcd.print(stack.numberWholeLayers.value, 1);
+  lcd.print(stack.numberWholeLayers);
   lcd.print("@");
   lcd.print(stack.turnsWholeLayer.value, 1);
   lcd.print(" 1@");
