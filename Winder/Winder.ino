@@ -129,7 +129,7 @@ void do_a_layer(double num_turns) {
 
   running = 0;
   spool.setCurrentPosition(0);
-//  shuttle.setCurrentPosition(0);
+  shuttle.setCurrentPosition(0);
 
   spoolSpeed = calculateSpoolSpeed();
   spoolSteps = calculateSpoolSteps(num_turns);
@@ -144,16 +144,18 @@ void do_a_layer(double num_turns) {
   Serial.print("shuttle steps = ");
   Serial.print(shuttleSteps, DEC);
   Serial.print("\n");
-
+  Serial.print("Number of turns for this layer\n");
+  printDouble(num_turns, 1);
+  Serial.print("\n");
 #endif
 
   if (direction) {
-     // If we change direction reset the position to 0
-     shuttle.moveTo(0);
-  }
-  else {
-        // Set the shuttle to move to the calculated position
-	shuttle.moveTo(shuttleSteps);
+    // If we change direction reset the position to 0
+    // shuttle.moveTo(0);
+    shuttle.moveTo(shuttleSteps);
+  } else {
+    // Set the shuttle to move to the calculated position
+    shuttle.moveTo(-1 * shuttleSteps);
   }
 
   spool.moveTo(spoolSteps);
@@ -170,8 +172,8 @@ void do_a_layer(double num_turns) {
       spoolSpeed = calculateSpoolSpeed();
       shuttleSpeed = calculateShuttleSpeed(spoolSpeed, wire_size.value);
 
-      // spool.setSpeed(spoolSpeed);
-      // shuttle.setSpeed(shuttleSpeed);
+      spool.setSpeed(spoolSpeed);
+      shuttle.setSpeed(shuttleSpeed);
       updateTps();
       updateTurns();
       start = millis();
@@ -197,18 +199,19 @@ void updateTurns() {
   current_layer_turns.value = temp_turns;
 
   current_turns.value += delta_turns;
-
-#ifdef SERIAL_DEBUG
-  Serial.print("temp_turns = ");
-  printDouble(temp_turns, 1);
-  Serial.print("\n");
-  Serial.print("delta_turns = ");
-  printDouble(delta_turns, 1);
-  Serial.print("\n");
-  Serial.print("current_turns = ");
-  printDouble(current_turns.value, 1);
-  Serial.print("\n");
-#endif
+  /*
+  #ifdef SERIAL_DEBUG
+    Serial.print("temp_turns = ");
+    printDouble(temp_turns, 1);
+    Serial.print("\n");
+    Serial.print("delta_turns = ");
+    printDouble(delta_turns, 1);
+    Serial.print("\n");
+    Serial.print("current_turns = ");
+    printDouble(current_turns.value, 1);
+    Serial.print("\n");
+  #endif
+  */
 }
 
 void requestEvent() {
