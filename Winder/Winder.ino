@@ -42,7 +42,7 @@ void setup() {
   Wire.onReceive(receiveEvent); // register event
 
   SetUpInterrupts(100);
-}
+}StackFloatBytes_t
 
 void loop() {
 
@@ -120,7 +120,7 @@ void loop() {
   }
 }
 
-void do_a_layer(double num_turns) {
+void do_a_layer(float num_turns) {
 
   long spoolSteps;
   long shuttleSteps;
@@ -381,15 +381,15 @@ float calculateShuttleSpeed(float spoolSpeed, float wireSize) {
   return shuttleSpeed;
 }
 
-long calculateShuttleSteps(float wireSize, int numberTurns) {
+long calculateShuttleSteps(float wireSize, float numberTurns) {
 
-  long shuttleSteps = (long)(wireSize * 200.0 * (long)numberTurns);
+  long shuttleSteps = (long)(wireSize * 200.0 * numberTurns);
   return shuttleSteps;
 }
 
-long calculateSpoolSteps(int numberTurns) {
+long calculateSpoolSteps(float numberTurns) {
 
-  long spoolSteps = 200 * (long)numberTurns;
+  long spoolSteps = (long)(200.0 * numberTurns);
   return spoolSteps;
 }
 
