@@ -42,7 +42,7 @@ void setup() {
   Wire.onReceive(receiveEvent); // register event
 
   SetUpInterrupts(100);
-}StackFloatBytes_t
+}
 
 void loop() {
 
