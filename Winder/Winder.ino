@@ -46,6 +46,68 @@ void setup() {
 
 void loop() {
 
+while(Serial.available() == 0){} // Wait for something on the serial bus
+
+while (serial.available()) {
+
+  if(serial.read() == 0x01) {// set parameters
+
+  // [0x1] -- Mode 1 comand job paremeters
+
+
+  // WS[float] -- wire size
+  // TT[int] -- Total turns
+  // SL[float ] -- spool length
+  // TL[int ] -- Turns per layer
+  // NL[int ] -- Number of whole layers
+  // LL[int] -- Turns last layer
+
+    char identifier[3];
+
+    serial.readBytes(identifier, 2);
+
+    if(strcmp(identifier, "WS")== 0) {
+        // Wire size
+        wire_size = serial.parseFloat();
+    }
+
+    if(strcmp(identifier, "TT")== 0) {
+        // Total turns
+        total_turns = serial.parseInt();
+    }
+
+    if(strcmp(identifier, "SL")== 0) {
+        // Spool length
+        spool_length = serial.parseFloat();
+    }
+
+    if(strcmp(identifier, "TL")== 0) {
+        // Turns per layer
+        turns+per_layer = serial.parseInt();
+    }
+
+    if(strcmp(identifier, "NL")== 0) {
+        // Number of layers
+        layers = serial.parseInt();
+    }
+
+    if(strcmp(identifier, "LL")== 0) {
+        // turns last layer
+        last_layer_turns = serial.parseInt();
+    }
+
+
+    current_mode = parameterMode;
+
+  }
+}
+
+
+
+
+
+
+
 #ifdef SERIAL_DEBUG
   if ((current_mode == parameterMode) && print_data) {
     Serial.print("Wire size: ");
