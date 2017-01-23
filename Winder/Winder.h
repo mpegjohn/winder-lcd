@@ -14,31 +14,26 @@
 
 #define SERIAL_DEBUG
 
-typedef union floatbytes {
-  float value;
-  uint8_t bytes[4];
-} Floatbyte_t;
-
 /*
 * These Floatbyte_t variables are set by entering the paameterMode
 */
 
-Floatbyte_t wire_size;        // The wire size in mm
-Floatbyte_t turns;            // The total number of turs
-Floatbyte_t spool_length;     // Spool length in mm
-Floatbyte_t turns_per_layer;  // Number of turns per layer
-Floatbyte_t last_layer_turns; // Number of turns for the last layer
+float wire_size;        // The wire size in mm
+int turns;            // The total number of turs
+float spool_length;     // Spool length in mm
+int turns_per_layer;  // Number of turns per layer
+int last_layer_turns; // Number of turns for the last layer
 
 /*
 * These Floatbyte_t variables are used during execution of the winding
 */
 
-Floatbyte_t current_turns;
-Floatbyte_t current_layer_turns;
-Floatbyte_t current_speed; // In Turns per second (TPS)
+float current_turns;
+int current_layer_turns;
+float current_speed; // In Turns per second (TPS)
 
 uint8_t this_layer; // Counter for current layer
-uint8_t num_layers; // Integer form of the number of layers.
+int num_layers; // Integer form of the number of layers.
 
 // Motor status byte
 // bit 0 = spool 1 = on 0 = off

@@ -23,9 +23,9 @@ ISR(TIMER1_COMPA_vect) { // timer1 interrupt
 }
 
 void setup() {
-  wire_size.value = 0.0;
-  turns.value = 0.0;
-  spool_length.value = 0.0;
+  wire_size = 0.0;
+  turns = 0;
+  spool_length = 0.0;
 
   pinMode(SPOOL_ENABLE, OUTPUT);
   pinMode(SHUTTLE_ENABLE, OUTPUT);
@@ -48,9 +48,9 @@ void loop() {
 
 while(Serial.available() == 0){} // Wait for something on the serial bus
 
-while (serial.available()) {
+while (Serial.available()) {
 
-  if(serial.read() == 0x01) {// set parameters
+  if(Serial.read() == 0x01) {// set parameters
 
   // [0x1] -- Mode 1 comand job paremeters
 
@@ -64,36 +64,46 @@ while (serial.available()) {
 
     char identifier[3];
 
-    serial.readBytes(identifier, 2);
+    Serial.readBytes(identifier, 2);
 
     if(strcmp(identifier, "WS")== 0) {
         // Wire size
-        wire_size = serial.parseFloat();
+        wire_size = Serial.parseFloat();
     }
 
-    if(strcmp(identifier, "TT")== 0) {
+    else if(strcmp(identifier, "TT")== 0) {
         // Total turns
-        total_turns = serial.parseInt();
+        turns = Serial.parseInt();
     }
 
-    if(strcmp(identifier, "SL")== 0) {
+    else if(strcmp(identifier, "SL")== 0) {
         // Spool length
-        spool_length = serial.parseFloat();
+        spool_length = Serial.parseFloat();
     }
 
-    if(strcmp(identifier, "TL")== 0) {
+    else if(strcmp(identifier, "TL")== 0) {
         // Turns per layer
-        turns+per_layer = serial.parseInt();
+        turns_per_layer = Serial.parseInt();
     }
 
-    if(strcmp(identifier, "NL")== 0) {
+    else if(strcmp(identifier, "NL")== 0) {
         // Number of layers
-        layers = serial.parseInt();
+        num_layers = Serial.parseInt();
     }
 
-    if(strcmp(identifier, "LL")== 0) {
+    else if(strcmp(identifier, "LL")== 0) {
         // turns last layer
-        last_layer_turns = serial.parseInt();
+        last_layer_turns = Serial.parseInt();
+
+    }
+
+
+    else {
+
+      Serial.print("Unable to decypher ");
+      Serial.print(identifier);
+      Serial.print("\n");
+
     }
 
 
@@ -111,14 +121,14 @@ while (serial.available()) {
 #ifdef SERIAL_DEBUG
   if ((current_mode == parameterMode) && print_data) {
     Serial.print("Wire size: ");
-    printDouble(wire_size.value, 2);
+    printDouble(wire_size, 2);
     Serial.print("\n");
 
     Serial.print("turns: ");
-    printDouble(turns.value, 2);
+    printDouble(turns, 2);
     Serial.print("\n");
     Serial.print("spool length: ");
-    printDouble(spool_length.value, 2);
+    printDouble(spool_length, 2);
     Serial.print("\n");
     print_data = false;
   }
@@ -150,12 +160,12 @@ while (serial.available()) {
       Serial.print("\n");
 #endif
 
-      do_a_layer(turns_per_layer.value);
+      do_a_layer(turns_per_layer);
       direction = direction ^ 1;
     }
 
     // do the last layer
-    if (last_layer_turns.value > 0) {
+    if (last_layer_turns > 0) {
       this_layer++;
 #ifdef SERIAL_DEBUG
       Serial.print("In last layer\n");
@@ -163,7 +173,7 @@ while (serial.available()) {
       Serial.print(this_layer);
       Serial.print("\n");
 #endif
-      do_a_layer(last_layer_turns.value);
+      do_a_layer(last_layer_turns);
     }
 
     current_mode = idleMode;
@@ -182,12 +192,12 @@ while (serial.available()) {
   }
 }
 
-void do_a_layer(float num_turns) {
+void do_a_layer(int num_turns) {
 
   long spoolSteps;
   long shuttleSteps;
 
-  current_layer_turns.value = 0.0;
+  current_layer_turns = 0.0;
 
   running = 0;
   spool.setCurrentPosition(0);
@@ -196,8 +206,8 @@ void do_a_layer(float num_turns) {
   spoolSpeed = calculateSpoolSpeed();
   spoolSteps = calculateSpoolSteps(num_turns);
 
-  shuttleSpeed = calculateShuttleSpeed(spoolSpeed, wire_size.value);
-  shuttleSteps = calculateShuttleSteps(wire_size.value, num_turns);
+  shuttleSpeed = calculateShuttleSpeed(spoolSpeed, wire_size);
+  shuttleSteps = calculateShuttleSteps(wire_size, num_turns);
 
 #ifdef SERIAL_DEBUG
   Serial.print("spool steps = ");
@@ -207,7 +217,7 @@ void do_a_layer(float num_turns) {
   Serial.print(shuttleSteps, DEC);
   Serial.print("\n");
   Serial.print("Number of turns for this layer\n");
-  printDouble(num_turns, 1);
+  Serial.print(num_turns);
   Serial.print("\n");
 #endif
 
@@ -232,7 +242,7 @@ void do_a_layer(float num_turns) {
     // every 150 mS
     if ((millis() - start) >= 250) {
       spoolSpeed = calculateSpoolSpeed();
-      shuttleSpeed = calculateShuttleSpeed(spoolSpeed, wire_size.value);
+      shuttleSpeed = calculateShuttleSpeed(spoolSpeed, wire_size);
 
       spool.setSpeed(spoolSpeed);
       shuttle.setSpeed(shuttleSpeed);
@@ -246,7 +256,7 @@ void do_a_layer(float num_turns) {
   updateTurns();
 }
 
-void updateTps() { current_speed.value = spoolSpeed / 200.0; }
+void updateTps() { current_speed = spoolSpeed / 200.0; }
 
 void updateTurns() {
   long pos = spool.currentPosition();
@@ -256,11 +266,11 @@ void updateTurns() {
 
   float temp_turns = ((float)pos) / 200.0;
 
-  float delta_turns = temp_turns - current_layer_turns.value;
+  float delta_turns = temp_turns - current_layer_turns;
 
-  current_layer_turns.value = temp_turns;
+  current_layer_turns = temp_turns;
 
-  current_turns.value += delta_turns;
+  current_turns += delta_turns;
   /*
   #ifdef SERIAL_DEBUG
     Serial.print("temp_turns = ");
@@ -283,32 +293,7 @@ void requestEvent() {
     current_mode = idleMode;
   } else if (request_mode == getStatusMode) {
 
-    //[4 bytes layer]
-    //[4 bytes turns]
-    //[4 bytes layer turns]
-    //[4 bytes speed]
-    //[1 byte] direction 1 = L to R, 0 = R to L
-    //[1 byte] running 1 = running, 0 - stopped
-
-    uint8_t status_data[15];
-
-    uint8_t *status_data_pointer;
-    status_data_pointer = status_data;
-
-    *status_data_pointer++ = this_layer;
-
-    status_data_pointer =
-        doubleToData(current_turns.bytes, status_data_pointer);
-    status_data_pointer =
-        doubleToData(current_layer_turns.bytes, status_data_pointer);
-    status_data_pointer =
-        doubleToData(current_speed.bytes, status_data_pointer);
-    status_data[13] = direction;
-    status_data[14] = running;
-
-    Wire.write(status_data, 15);
-    request_mode = idleMode;
-  } else if (request_mode == getMotorStatusMode) {
+      } else if (request_mode == getMotorStatusMode) {
     Wire.write(motor_status);
   } else if (request_mode == getVersion) {
     Wire.write(git_sha, sizeof(git_sha));
@@ -330,41 +315,6 @@ void receiveEvent(int howMany) {
     while (Wire.available()) {
       i2c_test_data[i++] = Wire.read();
     }
-  } else if (command == 0x01) // Job perameters
-  {
-    // [0x1] -- Mode 1 comand job paremeters
-    // [4 bytes] -- wire size
-    // [4 bytes] -- Total turns
-    // [4 bytes ] -- spool length
-    // [4 bytes ] -- Turns per layer
-    // [1 byte ] -- Number of whole layers
-    // [4 bytes ] -- Turns last layer
-
-    uint8_t parameters[21];
-
-    uint8_t *parameters_pointer;
-
-    parameters_pointer = parameters;
-
-    int i = 0;
-    while (Wire.available()) {
-      parameters[i++] = Wire.read();
-    }
-
-    parameters_pointer =
-        get_float_from_array(wire_size.bytes, parameters_pointer);
-    parameters_pointer = get_float_from_array(turns.bytes, parameters_pointer);
-    parameters_pointer =
-        get_float_from_array(spool_length.bytes, parameters_pointer);
-    parameters_pointer =
-        get_float_from_array(turns_per_layer.bytes, parameters_pointer);
-
-    num_layers = *parameters_pointer++;
-
-    parameters_pointer =
-        get_float_from_array(last_layer_turns.bytes, parameters_pointer);
-
-    current_mode = parameterMode;
   } else if ((command == 0x02) && (current_mode == parameterMode)) // start
   {
     current_mode = runningMode;
@@ -443,15 +393,15 @@ float calculateShuttleSpeed(float spoolSpeed, float wireSize) {
   return shuttleSpeed;
 }
 
-long calculateShuttleSteps(float wireSize, float numberTurns) {
+long calculateShuttleSteps(float wireSize, int numberTurns) {
 
-  long shuttleSteps = (long)(wireSize * 200.0 * numberTurns);
+  long shuttleSteps = (long)(wireSize * 200 * numberTurns);
   return shuttleSteps;
 }
 
-long calculateSpoolSteps(float numberTurns) {
+long calculateSpoolSteps(int numberTurns) {
 
-  long spoolSteps = (long)(200.0 * numberTurns);
+  long spoolSteps = (long)(200 * numberTurns);
   return spoolSteps;
 }
 
