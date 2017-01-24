@@ -46,93 +46,99 @@ void setup() {
 
 void loop() {
 
-while(Serial.available() == 0){} // Wait for something on the serial bus
+  Serial.print("hello\n");
 
-while (Serial.available()) {
+  while (Serial.available() == 0) {
+  } // Wait for something on the serial bus
 
-  if(Serial.read() == 0x01) {// set parameters
+  while (Serial.available()) {
 
-  // [0x1] -- Mode 1 comand job paremeters
+    if (Serial.read() == '1') { // set parameters
 
+      Serial.print("hello2\n");
+      while (Serial.available() == 0) {
+      } // Wait for something on the serial bus
 
-  // WS[float] -- wire size
-  // TT[int] -- Total turns
-  // SL[float ] -- spool length
-  // TL[int ] -- Turns per layer
-  // NL[int ] -- Number of whole layers
-  // LL[int] -- Turns last layer
+      // [0x1] -- Mode 1 comand job paremeters
 
-    char identifier[3];
+      // WS[float] -- wire size
+      // TT[int] -- Total turns
+      // SL[float ] -- spool length
+      // TL[int ] -- Turns per layer
+      // NL[int ] -- Number of whole layers
+      // LL[int] -- Turns last layer
 
-    Serial.readBytes(identifier, 2);
+      char identifier[3];
+      identifier[2] = '\0';
 
-    if(strcmp(identifier, "WS")== 0) {
+      Serial.readBytes(identifier, 2);
+
+      Serial.print(identifier);
+
+      if (strcmp(identifier, "WS") == 0) {
         // Wire size
-        wire_size = Serial.parseFloat();
-    }
+        //  wire_size = Serial.parseFloat();
 
-    else if(strcmp(identifier, "TT")== 0) {
+        while (Serial.available() == 0) {
+        } // Wait for something on the serial bus
+        unsigned char buffer[4];
+        float f;
+
+        Serial.readBytes(buffer, sizeof(float));
+        memcpy(&f, buffer, sizeof(float));
+        wire_size = f;
+      }
+
+      else if (strcmp(identifier, "TT") == 0) {
         // Total turns
         turns = Serial.parseInt();
-    }
+      }
 
-    else if(strcmp(identifier, "SL")== 0) {
+      else if (strcmp(identifier, "SL") == 0) {
         // Spool length
         spool_length = Serial.parseFloat();
-    }
+      }
 
-    else if(strcmp(identifier, "TL")== 0) {
+      else if (strcmp(identifier, "TL") == 0) {
         // Turns per layer
         turns_per_layer = Serial.parseInt();
-    }
+      }
 
-    else if(strcmp(identifier, "NL")== 0) {
+      else if (strcmp(identifier, "NL") == 0) {
         // Number of layers
         num_layers = Serial.parseInt();
-    }
+      }
 
-    else if(strcmp(identifier, "LL")== 0) {
+      else if (strcmp(identifier, "LL") == 0) {
         // turns last layer
         last_layer_turns = Serial.parseInt();
 
+      }
+
+      else {
+
+        Serial.print("Unable to decypher ");
+        Serial.print(identifier);
+        Serial.print("\n");
+      }
+
+      current_mode = parameterMode;
     }
-
-
-    else {
-
-      Serial.print("Unable to decypher ");
-      Serial.print(identifier);
-      Serial.print("\n");
-
-    }
-
-
-    current_mode = parameterMode;
-
   }
-}
 
+  //  if ((current_mode == parameterMode)) {
+  Serial.print("Wire size: ");
+  printDouble(wire_size, 2);
+  Serial.print("\n");
 
-
-
-
-
-
-#ifdef SERIAL_DEBUG
-  if ((current_mode == parameterMode) && print_data) {
-    Serial.print("Wire size: ");
-    printDouble(wire_size, 2);
-    Serial.print("\n");
-
-    Serial.print("turns: ");
-    printDouble(turns, 2);
-    Serial.print("\n");
-    Serial.print("spool length: ");
-    printDouble(spool_length, 2);
-    Serial.print("\n");
-    print_data = false;
-  }
-#endif
+  Serial.print("turns: ");
+  printDouble(turns, 2);
+  Serial.print("\n");
+  Serial.print("spool length: ");
+  printDouble(spool_length, 2);
+  Serial.print("\n");
+  print_data = false;
+  //  }
 
   if (current_mode == runningMode) {
 
@@ -293,7 +299,7 @@ void requestEvent() {
     current_mode = idleMode;
   } else if (request_mode == getStatusMode) {
 
-      } else if (request_mode == getMotorStatusMode) {
+  } else if (request_mode == getMotorStatusMode) {
     Wire.write(motor_status);
   } else if (request_mode == getVersion) {
     Wire.write(git_sha, sizeof(git_sha));

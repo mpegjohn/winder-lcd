@@ -91,7 +91,7 @@ void newJob() {
   menuResult turnsResult;
   menuResult spoolResult;
 
-  wireResult = showMenu(2.00, 0.01, 0.5, 2, "mm", "Set wire size");
+  wireResult = showMenu(2.00, 0.01, 0.5, 3, "mm", "Set wire size");
 
   if (!wireResult.status) {
     return;
@@ -149,7 +149,7 @@ void lcdReview(StackFloatBytes_t stack) {
   lcd.print("T:");
   lcd.print(gturnsTotal.value, 1);
   lcd.print(" W:");
-  lcd.print(gwireSize.value, 2);
+  lcd.print(gwireSize.value, 3);
 
   lcd.setCursor(0, 1);
   lcd.print("Spool:");
@@ -157,7 +157,7 @@ void lcdReview(StackFloatBytes_t stack) {
 
   lcd.setCursor(0, 2);
   lcd.print("Stk:");
-  if(stack.numberWholeLayers > 0) {
+  if (stack.numberWholeLayers > 0) {
     lcd.print(stack.numberWholeLayers);
     lcd.print("@");
     lcd.print((int)stack.turnsWholeLayer.value);
