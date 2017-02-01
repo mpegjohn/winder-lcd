@@ -73,56 +73,54 @@ void loop() {
       identifier[2] = '\0';
       do {
 
-      wait_for_serial();
+        wait_for_serial();
 
-      Serial.readBytes(identifier, 2);
-      Serial.print(identifier);
-      Serial.print("\n");
+        Serial.readBytes(identifier, 2);
+        Serial.print(identifier);
+        Serial.print("\n");
 
-      if (strcmp(identifier, "WS") == 0) {
-        // Wire size
-        wait_for_serial();
-        Serial.readBytes(wire_size.bytes, sizeof(float));
-        Serial.write(wire_size.bytes, 4);
-        Serial.print("\n");
-      }
-      else if (strcmp(identifier, "TT") == 0) {
-        // Total turns
-        wait_for_serial();
-        Serial.readBytes(turns.bytes, sizeof(float));
-        Serial.write(turns.bytes, 4);
-        Serial.print("\n");
-      }
-      else if (strcmp(identifier, "SL") == 0) {
-        // Spool length
-        wait_for_serial();
-        Serial.readBytes(spool_length.bytes, sizeof(float));
-        Serial.write(spool_length.bytes, 4);
-        Serial.print("\n");
-      }
-      else if (strcmp(identifier, "TL") == 0) {
-        // Turns per layer
-        wait_for_serial();
-        Serial.readBytes(turns_per_layer.bytes, sizeof(float));
-        Serial.write(turns_per_layer.bytes, 4);
-        Serial.print("\n");
-      }
-      else if (strcmp(identifier, "NL") == 0) {
-        // Number of layers
-        wait_for_serial();
-        num_layers = Serial.read();
-        Serial.write(num_layers);
-        Serial.print("\n");
-      }
-      else if (strcmp(identifier, "LL") == 0) {
-        // turns last layer
-        wait_for_serial();
-        Serial.readBytes(last_layer_turns.bytes, sizeof(float));
-        Serial.write(last_layer_turns.bytes, 4);
-        Serial.print("\n");
-      }
-    }while(strcmp(identifier, "DN") != 0);
+        if (strcmp(identifier, "WS") == 0) {
+          // Wire size
+          wait_for_serial();
+          Serial.readBytes(wire_size.bytes, sizeof(float));
+          Serial.write(wire_size.bytes, 4);
+          Serial.print("\n");
+        } else if (strcmp(identifier, "TT") == 0) {
+          // Total turns
+          wait_for_serial();
+          Serial.readBytes(turns.bytes, sizeof(float));
+          Serial.write(turns.bytes, 4);
+          Serial.print("\n");
+        } else if (strcmp(identifier, "SL") == 0) {
+          // Spool length
+          wait_for_serial();
+          Serial.readBytes(spool_length.bytes, sizeof(float));
+          Serial.write(spool_length.bytes, 4);
+          Serial.print("\n");
+        } else if (strcmp(identifier, "TL") == 0) {
+          // Turns per layer
+          wait_for_serial();
+          Serial.readBytes(turns_per_layer.bytes, sizeof(float));
+          Serial.write(turns_per_layer.bytes, 4);
+          Serial.print("\n");
+        } else if (strcmp(identifier, "NL") == 0) {
+          // Number of layers
+          wait_for_serial();
+          num_layers = Serial.read();
+          Serial.write(num_layers);
+          Serial.print("\n");
+        } else if (strcmp(identifier, "LL") == 0) {
+          // turns last layer
+          wait_for_serial();
+          Serial.readBytes(last_layer_turns.bytes, sizeof(float));
+          Serial.write(last_layer_turns.bytes, 4);
+          Serial.print("\n");
+        }
+      } while (strcmp(identifier, "DN") != 0);
       current_mode = parameterMode;
+    }
+    else if(strcmp(buf, "GS") == 0) {
+      send_status_serial();
     }
   }
 
@@ -299,6 +297,33 @@ void updateTurns() {
   */
 }
 
+void send_status_serial() {
+  //[1 byte layer]
+  //[4 bytes turns]
+  //[4 bytes layer turns]
+  //[4 bytes speed]
+  //[1 byte] direction 1 = L to R, 0 = R to L
+  //[1 byte] running 1 = running, 0 - stopped
+
+  uint8_t status_data[15];
+
+  uint8_t *status_data_pointer;
+  status_data_pointer = status_data;
+
+  *status_data_pointer++ = this_layer;
+
+  status_data_pointer =
+    doubleToData(current_turns.bytes, status_data_pointer);
+  status_data_pointer =
+    doubleToData(current_layer_turns.bytes, status_data_pointer);
+  status_data_pointer =
+    doubleToData(current_speed.bytes, status_data_pointer);
+  status_data[13] = direction;
+  status_data[14] = running;
+
+  Serial.write(status_data,15);
+}
+
 void requestEvent() {
 
   if (current_mode == testMode) {
@@ -306,7 +331,7 @@ void requestEvent() {
     current_mode = idleMode;
   } else if (request_mode == getStatusMode) {
 
-    //[4 bytes layer]
+    //[1 byte layer]
     //[4 bytes turns]
     //[4 bytes layer turns]
     //[4 bytes speed]
