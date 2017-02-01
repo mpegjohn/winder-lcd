@@ -36,10 +36,13 @@ void setup() {
   spool.setMaxSpeed(MAX_SPEED);
   shuttle.setMaxSpeed(MAX_SPEED);
 
-  Serial.begin(9600); // start serial for output
+  Serial.begin(115200); // start serial for output
   Wire.begin(8);
   Wire.onRequest(requestEvent); // register a request
   Wire.onReceive(receiveEvent); // register event
+
+  current_mode = idleMode;
+  this_layer = 0;
 
   SetUpInterrupts(100);
 }
@@ -122,23 +125,10 @@ void loop() {
     else if(strcmp(buf, "GS") == 0) {
       send_status_serial();
     }
+    else if(strcmp(buf, "GO") == 0) {
+      current_mode = runningMode;
+    }
   }
-
-#ifdef SERIAL_DEBUG
-  if ((current_mode == parameterMode) && print_data) {
-    Serial.print("Wire size: ");
-    printDouble(wire_size.value, 2);
-    Serial.print("\n");
-
-    Serial.print("turns: ");
-    printDouble(turns.value, 2);
-    Serial.print("\n");
-    Serial.print("spool length: ");
-    printDouble(spool_length.value, 2);
-    Serial.print("\n");
-    print_data = false;
-  }
-#endif
 
   if (current_mode == runningMode) {
 
@@ -159,13 +149,6 @@ void loop() {
 
       this_layer++;
 
-#ifdef SERIAL_DEBUG
-      Serial.print("In multiple layers\n");
-      Serial.print("this layer = ");
-      Serial.print(this_layer);
-      Serial.print("\n");
-#endif
-
       do_a_layer(turns_per_layer.value);
       direction = direction ^ 1;
     }
@@ -173,18 +156,12 @@ void loop() {
     // do the last layer
     if (last_layer_turns.value > 0) {
       this_layer++;
-#ifdef SERIAL_DEBUG
-      Serial.print("In last layer\n");
-      Serial.print("this layer = ");
-      Serial.print(this_layer);
-      Serial.print("\n");
-#endif
       do_a_layer(last_layer_turns.value);
     }
 
     current_mode = idleMode;
     running = 0;
-  }
+  } //runningMode
 
   if (motor_status & 0x01) {
     digitalWrite(SPOOL_ENABLE, LOW);
@@ -220,18 +197,6 @@ void do_a_layer(float num_turns) {
   shuttleSpeed = calculateShuttleSpeed(spoolSpeed, wire_size.value);
   shuttleSteps = calculateShuttleSteps(wire_size.value, num_turns);
 
-#ifdef SERIAL_DEBUG
-  Serial.print("spool steps = ");
-  Serial.print(spoolSteps, DEC);
-  Serial.print("\n");
-  Serial.print("shuttle steps = ");
-  Serial.print(shuttleSteps, DEC);
-  Serial.print("\n");
-  Serial.print("Number of turns for this layer\n");
-  printDouble(num_turns, 1);
-  Serial.print("\n");
-#endif
-
   if (direction) {
     // If we change direction reset the position to 0
     // shuttle.moveTo(0);
@@ -259,12 +224,14 @@ void do_a_layer(float num_turns) {
       shuttle.setSpeed(shuttleSpeed);
       updateTps();
       updateTurns();
+      update_serial_status_if_required();
       start = millis();
     }
 
   } while ((spool.distanceToGo() != 0) || (shuttle.distanceToGo() != 0));
   updateTps();
   updateTurns();
+  update_serial_status_if_required();
 }
 
 void updateTps() { current_speed.value = spoolSpeed / 200.0; }
@@ -282,19 +249,19 @@ void updateTurns() {
   current_layer_turns.value = temp_turns;
 
   current_turns.value += delta_turns;
-  /*
-  #ifdef SERIAL_DEBUG
-    Serial.print("temp_turns = ");
-    printDouble(temp_turns, 1);
-    Serial.print("\n");
-    Serial.print("delta_turns = ");
-    printDouble(delta_turns, 1);
-    Serial.print("\n");
-    Serial.print("current_turns = ");
-    printDouble(current_turns.value, 1);
-    Serial.print("\n");
-  #endif
-  */
+}
+
+void update_serial_status_if_required() {
+  while(Serial.available()) {
+    char buf[3];
+    buf[2] = '\0';
+    Serial.readBytes(buf, 2);
+    if(strcmp(buf, "GS")==0) {
+      Serial.print(buf);
+      Serial.print("\n");
+      send_status_serial();
+    }
+  }
 }
 
 void send_status_serial() {
@@ -482,6 +449,7 @@ float calculateSpoolSpeed() {
   //  And scale the pot's value from min to max speeds
   float spoolSpeed =
       ((analog_value / 1023.0) * (MAX_SPEED - MIN_SPEED)) + MIN_SPEED;
+  return MAX_SPEED;
   return spoolSpeed;
 }
 
