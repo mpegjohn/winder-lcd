@@ -51,7 +51,7 @@ void loop() {
 
   wait_for_serial();
 
-  while (Serial.available()) {
+  if(Serial.available()) {
 
     char buf[3];
     buf[2] = '\0';
@@ -122,10 +122,16 @@ void loop() {
       } while (strcmp(identifier, "DN") != 0);
       current_mode = parameterMode;
     }
-    else if(strcmp(buf, "GS") == 0) {
+    else if(strcmp(buf, "GS") == 0) { // Get status
       send_status_serial();
     }
-    else if(strcmp(buf, "GO") == 0) {
+    else if (strcmp(buf, "SM") == 0) { // Set motor
+      wait_for_serial();
+      motor_status = Serial.read();
+      Serial.write(motor_status);
+      Serial.print("\n");
+    }
+    else if(strcmp(buf, "GO") == 0) { // Do the current job
       current_mode = runningMode;
     }
   }
@@ -251,15 +257,34 @@ void updateTurns() {
   current_turns.value += delta_turns;
 }
 
+// Checks for anything on the serial line
+// If there is, the it should be only GS - get status
+// or PS - Pause.
+// If GS  it sends job status back.
+// If PS, it stops the job, by setting the global running to 0
+// Once in PS we wait for a GO signal to continue the job.
 void update_serial_status_if_required() {
-  while(Serial.available()) {
+  if(Serial.available()) {
     char buf[3];
     buf[2] = '\0';
     Serial.readBytes(buf, 2);
+    Serial.print(buf);
+    Serial.print("\n");
+
     if(strcmp(buf, "GS")==0) {
-      Serial.print(buf);
-      Serial.print("\n");
       send_status_serial();
+    }
+    else if(strcmp(buf, "PS") == 0) { // Pause state
+      running = 0;
+      do {
+        wait_for_serial();
+        Serial.readBytes(buf, 2);
+        Serial.print(buf);
+        Serial.print("\n");
+        if(strcmp(buf, "GO") == 0) {
+          running = 1;
+        }
+      } while (running == 0);
     }
   }
 }
@@ -449,7 +474,7 @@ float calculateSpoolSpeed() {
   //  And scale the pot's value from min to max speeds
   float spoolSpeed =
       ((analog_value / 1023.0) * (MAX_SPEED - MIN_SPEED)) + MIN_SPEED;
-  return MAX_SPEED;
+  //return MAX_SPEED;
   return spoolSpeed;
 }
 
