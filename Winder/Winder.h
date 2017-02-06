@@ -14,6 +14,8 @@
 
 #define SERIAL_DEBUG 0
 
+#define NUMTAPS 20
+
 typedef union floatbytes {
   float value;
   uint8_t bytes[4];
@@ -39,6 +41,10 @@ Floatbyte_t current_speed; // In Turns per second (TPS)
 
 uint8_t this_layer; // Counter for current layer
 uint8_t num_layers; // Integer form of the number of layers.
+
+Floatbyte_t taps[NUMTAPS];
+int tap_offset = 0;
+
 
 // Motor status byte
 // bit 0 = spool 1 = on 0 = off

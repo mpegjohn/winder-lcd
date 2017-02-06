@@ -118,6 +118,16 @@ void loop() {
           Serial.readBytes(last_layer_turns.bytes, sizeof(float));
           Serial.write(last_layer_turns.bytes, 4);
           Serial.print("\n");
+        } else if (strcmp(identifier, "AT") == 0) {
+          // add a tap
+          wait_for_serial();
+          Floatbyte_t tap;
+          Serial.readBytes(tap.bytes, sizeof(float));
+          Serial.write(tap.bytes, 4);
+          Serial.print("\n");
+          if(tap_offset < NUMTAPS) {
+            taps[tap_offset] = tap;
+          }
         }
       } while (strcmp(identifier, "DN") != 0);
       current_mode = parameterMode;
@@ -150,12 +160,36 @@ void loop() {
     int layer_count;
     this_layer = 0;
 
+    Floatbyte_t * current_tap_p;
+
+    current_tap_p = taps;
+
+    float tap;
+
+    if(tap_offset > 0) {
+        tap = current_tap_p->value;
+    }
+
     // Do all the whole layers
     for (layer_count = 0; layer_count < num_layers; layer_count++) {
 
       this_layer++;
 
+      float turns_to_tap;
+      float turns_to_end_of_layer;
+      // See if the current selected tap is in this layer.
+      if((tap >=  current_turns.value) && (tap <= (current_turns.value + turns_per_layer.value))) {
+        // Tap is in this layer somewhere
+
+        turns_to_tap = current_turns.value - tap;
+        turns_to_end_of_layer = turns_per_layer.value - turns_to_tap;
+        do_a_layer(turns_to_tap);
+        wait_for_serial();
+        do_a_layer(turns_to_end_of_layer);
+      }
+      else {
       do_a_layer(turns_per_layer.value);
+      }
       direction = direction ^ 1;
     }
 
