@@ -43,8 +43,13 @@ uint8_t this_layer; // Counter for current layer
 uint8_t num_layers; // Integer form of the number of layers.
 
 Floatbyte_t taps[NUMTAPS];
-int tap_offset = 0;
+int num_taps = 0;
 
+typedef struct {
+  float taps[20];
+  int num_layer_taps;
+  float turns_remaining;
+} layer_taps;
 
 // Motor status byte
 // bit 0 = spool 1 = on 0 = off
@@ -54,6 +59,7 @@ uint8_t motor_status = 0x03; // both motors on
 
 uint8_t direction = 0;
 uint8_t running = 0; // The flag that controlls the motor updates
+uint8_t at_tap = 0; // 0 not at a tap, 1 = at a tap, waiting for the go again
 
 enum modes {
   idleMode,

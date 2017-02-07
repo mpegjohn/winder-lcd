@@ -125,8 +125,8 @@ void loop() {
           Serial.readBytes(tap.bytes, sizeof(float));
           Serial.write(tap.bytes, 4);
           Serial.print("\n");
-          if(tap_offset < NUMTAPS) {
-            taps[tap_offset] = tap;
+          if( num_taps < NUMTAPS) {
+            taps[num_taps++] = tap;
           }
         }
       } while (strcmp(identifier, "DN") != 0);
@@ -160,43 +160,41 @@ void loop() {
     int layer_count;
     this_layer = 0;
 
-    Floatbyte_t * current_tap_p;
-
-    current_tap_p = taps;
-
-    float tap;
-
-    if(tap_offset > 0) {
-        tap = current_tap_p->value;
-    }
-
     // Do all the whole layers
     for (layer_count = 0; layer_count < num_layers; layer_count++) {
 
       this_layer++;
 
-      float turns_to_tap;
-      float turns_to_end_of_layer;
-      // See if the current selected tap is in this layer.
-      if((tap >=  current_turns.value) && (tap <= (current_turns.value + turns_per_layer.value))) {
-        // Tap is in this layer somewhere
+      layer_taps taps_in_layer = get_taps_in_layer(turns_per_layer.value);
 
-        turns_to_tap = current_turns.value - tap;
-        turns_to_end_of_layer = turns_per_layer.value - turns_to_tap;
-        do_a_layer(turns_to_tap);
-        wait_for_serial();
-        do_a_layer(turns_to_end_of_layer);
+      int tap_count;
+      at_tap = 0;
+      for(tap_count = 0; tap_count < taps_in_layer.num_layer_taps; tap_count++) {
+          do_a_layer(taps_in_layer.taps[tap_count]);
+          at_tap = 1;
+          wait_for_tap();
+          at_tap = 0;
       }
-      else {
-      do_a_layer(turns_per_layer.value);
-      }
+      do_a_layer(taps_in_layer.turns_remaining);
+
+      // Change direction of shuttle
       direction = direction ^ 1;
     }
 
     // do the last layer
     if (last_layer_turns.value > 0) {
       this_layer++;
-      do_a_layer(last_layer_turns.value);
+
+      layer_taps taps_in_layer = get_taps_in_layer(last_layer_turns.value);
+
+      int tap_count;
+      for(tap_count = 0; tap_count < taps_in_layer.num_layer_taps; tap_count++) {
+          do_a_layer(taps_in_layer.taps[tap_count]);
+          at_tap = 1;
+          wait_for_tap();
+          at_tap = 0;
+      }
+      do_a_layer(taps_in_layer.turns_remaining);
     }
 
     current_mode = idleMode;
@@ -213,6 +211,32 @@ void loop() {
   } else {
     digitalWrite(SHUTTLE_ENABLE, HIGH);
   }
+}
+
+layer_taps get_taps_in_layer(float num_turns_in_layer) {
+
+  layer_taps this_layer_taps;
+
+  Floatbyte_t *current_tap_p;
+  current_tap_p = taps;
+
+  int current_tap;
+  float turns_remaining = num_turns_in_layer;
+  int this_layer_num_taps = 0;
+
+  float last_tap = current_turns.value;
+
+  for(current_tap = 0; current_tap < num_taps; current_tap++) {
+    float tap = (current_tap_p + current_tap)->value; // get the turns value for this tap
+    if((tap >=  current_turns.value) && (tap <= (current_turns.value + num_turns_in_layer))) {
+      this_layer_taps.taps[this_layer_num_taps++] = tap - last_tap;
+      last_tap = tap;
+      turns_remaining = (current_turns.value + num_turns_in_layer) - tap;
+    }
+  }
+  this_layer_taps.num_layer_taps = this_layer_num_taps;
+  this_layer_taps.turns_remaining = turns_remaining;
+  return this_layer_taps;
 }
 
 void wait_for_serial() {
@@ -291,6 +315,24 @@ void updateTurns() {
   current_turns.value += delta_turns;
 }
 
+void wait_for_tap() {
+
+  char buf[3];
+  buf[2] = '\0';
+
+  do {
+  wait_for_serial();
+  Serial.readBytes(buf, 2);
+  Serial.print(buf);
+  Serial.print("\n");
+
+  if(strcmp(buf, "GS")==0) {
+    send_status_serial();
+    continue;
+  }
+ } while(strcmp(buf, "GO") !=0 );
+}
+
 // Checks for anything on the serial line
 // If there is, the it should be only GS - get status
 // or PS - Pause.
@@ -330,8 +372,9 @@ void send_status_serial() {
   //[4 bytes speed]
   //[1 byte] direction 1 = L to R, 0 = R to L
   //[1 byte] running 1 = running, 0 - stopped
+  //[1 byte] at tap.
 
-  uint8_t status_data[15];
+  uint8_t status_data[16];
 
   uint8_t *status_data_pointer;
   status_data_pointer = status_data;
@@ -346,8 +389,9 @@ void send_status_serial() {
     doubleToData(current_speed.bytes, status_data_pointer);
   status_data[13] = direction;
   status_data[14] = running;
+  status_data[15] = at_tap;
 
-  Serial.write(status_data,15);
+  Serial.write(status_data,16);
 }
 
 void requestEvent() {
@@ -508,7 +552,7 @@ float calculateSpoolSpeed() {
   //  And scale the pot's value from min to max speeds
   float spoolSpeed =
       ((analog_value / 1023.0) * (MAX_SPEED - MIN_SPEED)) + MIN_SPEED;
-  //return MAX_SPEED;
+  return MAX_SPEED;
   return spoolSpeed;
 }
 
