@@ -82,7 +82,24 @@ void loop() {
         Serial.print(identifier);
         Serial.print("\n");
 
-        if (strcmp(identifier, "WS") == 0) {
+        if(strcmp(identifier, "RS") == 0) { // Reset all variables
+          wire_size.value = 0.0;
+          turns.value = 0.0;
+          spool_length.value = 0.0;
+          turns_per_layer.value = 0.0;
+          num_layers = 0;
+          last_layer_turns.value = 0.0;
+          current_turns.value = 0.0;
+          num_taps = 0;
+          motor_status = 0x03; // both motors on
+          direction = 0;
+          running = 0;
+          at_tap = 0;
+          this_layer = 0;
+          current_layer_turns.value = 0;
+          current_turns.value = 0;
+
+        } else if (strcmp(identifier, "WS") == 0) {
           // Wire size
           wait_for_serial();
           Serial.readBytes(wire_size.bytes, sizeof(float));
