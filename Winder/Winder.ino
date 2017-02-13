@@ -14,7 +14,7 @@ float shuttleSpeed;
 
 uint8_t i2c_test_data[3];
 
-ISR(TIMER1_COMPA_vect) { // timer1 interrupt
+ISR(TIMER1_COMPA_vect) {  // timer1 interrupt
 
   if (running) {
     spool.runSpeedToPosition();
@@ -27,6 +27,9 @@ void setup() {
   turns.value = 0.0;
   spool_length.value = 0.0;
 
+  // Invert the spool direction pin
+  spool.setPinsInverted(true, false, false);
+
   pinMode(SPOOL_ENABLE, OUTPUT);
   pinMode(SHUTTLE_ENABLE, OUTPUT);
 
@@ -36,10 +39,10 @@ void setup() {
   spool.setMaxSpeed(MAX_SPEED);
   shuttle.setMaxSpeed(MAX_SPEED);
 
-  Serial.begin(115200); // start serial for output
+  Serial.begin(115200);  // start serial for output
   Wire.begin(8);
-  Wire.onRequest(requestEvent); // register a request
-  Wire.onReceive(receiveEvent); // register event
+  Wire.onRequest(requestEvent);  // register a request
+  Wire.onReceive(receiveEvent);  // register event
 
   current_mode = idleMode;
   this_layer = 0;
@@ -48,11 +51,9 @@ void setup() {
 }
 
 void loop() {
-
   wait_for_serial();
 
-  if(Serial.available()) {
-
+  if (Serial.available()) {
     char buf[3];
     buf[2] = '\0';
 
@@ -60,7 +61,7 @@ void loop() {
     Serial.print(buf);
     Serial.print("\n");
 
-    if (strcmp(buf, "SJ") == 0) { // set parameters
+    if (strcmp(buf, "SJ") == 0) {  // set parameters
 
       // [0x1] -- Mode 1 comand job paremeters
 
@@ -75,14 +76,13 @@ void loop() {
       char identifier[3];
       identifier[2] = '\0';
       do {
-
         wait_for_serial();
 
         Serial.readBytes(identifier, 2);
         Serial.print(identifier);
         Serial.print("\n");
 
-        if(strcmp(identifier, "RS") == 0) { // Reset all variables
+        if (strcmp(identifier, "RS") == 0) {  // Reset all variables
           wire_size.value = 0.0;
           turns.value = 0.0;
           spool_length.value = 0.0;
@@ -91,7 +91,7 @@ void loop() {
           last_layer_turns.value = 0.0;
           current_turns.value = 0.0;
           num_taps = 0;
-          motor_status = 0x03; // both motors on
+          motor_status = 0x03;  // both motors on
           direction = 0;
           running = 0;
           at_tap = 0;
@@ -142,35 +142,57 @@ void loop() {
           Serial.readBytes(tap.bytes, sizeof(float));
           Serial.write(tap.bytes, 4);
           Serial.print("\n");
-          if( num_taps < NUMTAPS) {
+          if (num_taps < NUMTAPS) {
             taps[num_taps++] = tap;
           }
         }
       } while (strcmp(identifier, "DN") != 0);
       current_mode = parameterMode;
-    }
-    else if(strcmp(buf, "GS") == 0) { // Get status
+    } else if (strcmp(buf, "GS") == 0) {  // Get status
       send_status_serial();
-    }
-    else if (strcmp(buf, "SM") == 0) { // Set motor
+    } else if (strcmp(buf, "SM") == 0) {  // Set motor
       wait_for_serial();
       motor_status = Serial.read();
       Serial.write(motor_status);
       Serial.print("\n");
-    }
-    else if(strcmp(buf, "GO") == 0) { // Do the current job
+    } else if (strcmp(buf, "SC") == 0 ||
+               strcmp(buf, "SA") == 0) {  // Rotate spool
+
+      float mult = 1.0;
+
+      if (strcmp(buf, "AC") == 0) {
+        mult = -1.0;
+      }
+
+      uint8_t temp_motor_status = motor_status;
+      digitalWrite(SPOOL_ENABLE, LOW);
+
+      do {
+        spoolSpeed = calculateSpoolSpeed() * mult;
+        spool.setSpeed(spoolSpeed);
+        spool.runSpeed();
+
+        if (Serial.available()) {
+          Serial.readBytes(buf, 2);
+          Serial.print(buf);
+          Serial.print("\n");
+        }
+      } while (strcmp(buf, "ST") != 0);  // Wait for stop command
+
+      motor_status = temp_motor_status; // Restore motors
+
+    } else if (strcmp(buf, "GO") == 0) {  // Do the current job
       current_mode = runningMode;
     }
   }
 
   if (current_mode == runningMode) {
-
     direction = 0;
 
     // turn on the enables for the motors
     digitalWrite(SPOOL_ENABLE, LOW);
     digitalWrite(SHUTTLE_ENABLE, LOW);
-    motor_status = 0x03; // both motors on
+    motor_status = 0x03;  // both motors on
 
     running = 1;
 
@@ -179,18 +201,18 @@ void loop() {
 
     // Do all the whole layers
     for (layer_count = 0; layer_count < num_layers; layer_count++) {
-
       this_layer++;
 
       layer_taps taps_in_layer = get_taps_in_layer(turns_per_layer.value);
 
       int tap_count;
       at_tap = 0;
-      for(tap_count = 0; tap_count < taps_in_layer.num_layer_taps; tap_count++) {
-          do_a_layer(taps_in_layer.taps[tap_count]);
-          at_tap = 1;
-          wait_for_tap();
-          at_tap = 0;
+      for (tap_count = 0; tap_count < taps_in_layer.num_layer_taps;
+           tap_count++) {
+        do_a_layer(taps_in_layer.taps[tap_count]);
+        at_tap = 1;
+        wait_for_tap();
+        at_tap = 0;
       }
       do_a_layer(taps_in_layer.turns_remaining);
 
@@ -205,18 +227,19 @@ void loop() {
       layer_taps taps_in_layer = get_taps_in_layer(last_layer_turns.value);
 
       int tap_count;
-      for(tap_count = 0; tap_count < taps_in_layer.num_layer_taps; tap_count++) {
-          do_a_layer(taps_in_layer.taps[tap_count]);
-          at_tap = 1;
-          wait_for_tap();
-          at_tap = 0;
+      for (tap_count = 0; tap_count < taps_in_layer.num_layer_taps;
+           tap_count++) {
+        do_a_layer(taps_in_layer.taps[tap_count]);
+        at_tap = 1;
+        wait_for_tap();
+        at_tap = 0;
       }
       do_a_layer(taps_in_layer.turns_remaining);
     }
 
     current_mode = idleMode;
     running = 0;
-  } //runningMode
+  }  // runningMode
 
   if (motor_status & 0x01) {
     digitalWrite(SPOOL_ENABLE, LOW);
@@ -231,7 +254,6 @@ void loop() {
 }
 
 layer_taps get_taps_in_layer(float num_turns_in_layer) {
-
   layer_taps this_layer_taps;
 
   Floatbyte_t *current_tap_p;
@@ -243,9 +265,11 @@ layer_taps get_taps_in_layer(float num_turns_in_layer) {
 
   float last_tap = current_turns.value;
 
-  for(current_tap = 0; current_tap < num_taps; current_tap++) {
-    float tap = (current_tap_p + current_tap)->value; // get the turns value for this tap
-    if((tap >=  current_turns.value) && (tap <= (current_turns.value + num_turns_in_layer))) {
+  for (current_tap = 0; current_tap < num_taps; current_tap++) {
+    float tap = (current_tap_p + current_tap)
+                    ->value;  // get the turns value for this tap
+    if ((tap >= current_turns.value) &&
+        (tap <= (current_turns.value + num_turns_in_layer))) {
       this_layer_taps.taps[this_layer_num_taps++] = tap - last_tap;
       last_tap = tap;
       turns_remaining = (current_turns.value + num_turns_in_layer) - tap;
@@ -262,7 +286,6 @@ void wait_for_serial() {
 }
 
 void do_a_layer(float num_turns) {
-
   long spoolSteps;
   long shuttleSteps;
 
@@ -320,8 +343,7 @@ void updateTps() { current_speed.value = spoolSpeed / 200.0; }
 void updateTurns() {
   long pos = spool.currentPosition();
 
-  if (pos < 0)
-    pos = pos * -1;
+  if (pos < 0) pos = pos * -1;
 
   float temp_turns = ((float)pos) / 200.0;
 
@@ -333,21 +355,20 @@ void updateTurns() {
 }
 
 void wait_for_tap() {
-
   char buf[3];
   buf[2] = '\0';
 
   do {
-  wait_for_serial();
-  Serial.readBytes(buf, 2);
-  Serial.print(buf);
-  Serial.print("\n");
+    wait_for_serial();
+    Serial.readBytes(buf, 2);
+    Serial.print(buf);
+    Serial.print("\n");
 
-  if(strcmp(buf, "GS")==0) {
-    send_status_serial();
-    continue;
-  }
- } while(strcmp(buf, "GO") !=0 );
+    if (strcmp(buf, "GS") == 0) {
+      send_status_serial();
+      continue;
+    }
+  } while (strcmp(buf, "GO") != 0);
 }
 
 // Checks for anything on the serial line
@@ -357,24 +378,23 @@ void wait_for_tap() {
 // If PS, it stops the job, by setting the global running to 0
 // Once in PS we wait for a GO signal to continue the job.
 void update_serial_status_if_required() {
-  if(Serial.available()) {
+  if (Serial.available()) {
     char buf[3];
     buf[2] = '\0';
     Serial.readBytes(buf, 2);
     Serial.print(buf);
     Serial.print("\n");
 
-    if(strcmp(buf, "GS")==0) {
+    if (strcmp(buf, "GS") == 0) {
       send_status_serial();
-    }
-    else if(strcmp(buf, "PS") == 0) { // Pause state
+    } else if (strcmp(buf, "PS") == 0) {  // Pause state
       running = 0;
       do {
         wait_for_serial();
         Serial.readBytes(buf, 2);
         Serial.print(buf);
         Serial.print("\n");
-        if(strcmp(buf, "GO") == 0) {
+        if (strcmp(buf, "GO") == 0) {
           running = 1;
         }
       } while (running == 0);
@@ -398,26 +418,22 @@ void send_status_serial() {
 
   *status_data_pointer++ = this_layer;
 
+  status_data_pointer = doubleToData(current_turns.bytes, status_data_pointer);
   status_data_pointer =
-    doubleToData(current_turns.bytes, status_data_pointer);
-  status_data_pointer =
-    doubleToData(current_layer_turns.bytes, status_data_pointer);
-  status_data_pointer =
-    doubleToData(current_speed.bytes, status_data_pointer);
+      doubleToData(current_layer_turns.bytes, status_data_pointer);
+  status_data_pointer = doubleToData(current_speed.bytes, status_data_pointer);
   status_data[13] = direction;
   status_data[14] = running;
   status_data[15] = at_tap;
 
-  Serial.write(status_data,16);
+  Serial.write(status_data, 16);
 }
 
 void requestEvent() {
-
   if (current_mode == testMode) {
     Wire.write(i2c_test_data, 3);
     current_mode = idleMode;
   } else if (request_mode == getStatusMode) {
-
     //[1 byte layer]
     //[4 bytes turns]
     //[4 bytes layer turns]
@@ -455,9 +471,8 @@ void requestEvent() {
 // function that executes whenever data is received from master
 // this function is registered as an event, see setup()
 void receiveEvent(int howMany) {
-
   uint8_t command = Wire.read();
-  if (command == 0x00) // I2C test
+  if (command == 0x00)  // I2C test
   {
     // Serial.print("I2C test received \n");
     current_mode = testMode;
@@ -465,7 +480,7 @@ void receiveEvent(int howMany) {
     while (Wire.available()) {
       i2c_test_data[i++] = Wire.read();
     }
-  } else if (command == 0x01) // Job perameters
+  } else if (command == 0x01)  // Job perameters
   {
     // [0x1] -- Mode 1 comand job paremeters
     // [4 bytes] -- wire size
@@ -500,35 +515,34 @@ void receiveEvent(int howMany) {
         get_float_from_array(last_layer_turns.bytes, parameters_pointer);
 
     current_mode = parameterMode;
-  } else if ((command == 0x02) && (current_mode == parameterMode)) // start
+  } else if ((command == 0x02) && (current_mode == parameterMode))  // start
   {
     current_mode = runningMode;
-  } else if (command == 0x03) // status
+  } else if (command == 0x03)  // status
   {
     request_mode = getStatusMode;
-  } else if (command == 0x04) // motor status
+  } else if (command == 0x04)  // motor status
   {
     request_mode = getMotorStatusMode;
-  } else if (command == 0x05) // set motor status
+  } else if (command == 0x05)  // set motor status
   {
     motor_status = Wire.read();
-  } else if (command == 0x06) // pause state
+  } else if (command == 0x06)  // pause state
   {
     current_mode = pauseMode;
     running = 0;
-  } else if (command == 0x07) // continue state
+  } else if (command == 0x07)  // continue state
   {
     current_mode = runningMode;
     running = 1;
-  } else if (command == 0x08) { // get version
+  } else if (command == 0x08) {  // get version
     request_mode = getVersion;
-  } else if (command == 0x09) { // get DATE
+  } else if (command == 0x09) {  // get DATE
     request_mode = getDate;
   }
 }
 
 uint8_t *get_float_from_array(uint8_t *out_array, uint8_t *current_index) {
-
   int i = 0;
   for (i = 0; i < 4; i++) {
     out_array[i] = *current_index++;
@@ -580,13 +594,11 @@ float calculateShuttleSpeed(float spoolSpeed, float wireSize) {
 }
 
 long calculateShuttleSteps(float wireSize, float numberTurns) {
-
   long shuttleSteps = (long)(wireSize * 200.0 * numberTurns);
   return shuttleSteps;
 }
 
 long calculateSpoolSteps(float numberTurns) {
-
   long spoolSteps = (long)(200.0 * numberTurns);
   return spoolSteps;
 }
@@ -598,9 +610,9 @@ long calculateSpoolSteps(float numberTurns) {
  */
 bool SetUpInterrupts(const int usecs) {
   // initialize Timer1
-  cli();      // disable global interrupts
-  TCCR1A = 0; // set entire TCCR1A register to 0
-  TCCR1B = 0; // same for TCCR1B
+  cli();       // disable global interrupts
+  TCCR1A = 0;  // set entire TCCR1A register to 0
+  TCCR1B = 0;  // same for TCCR1B
 
   // set compare match register to desired timer count (1ms):
   // ATmega328 with a 16MHz clock, clk/8
@@ -608,21 +620,21 @@ bool SetUpInterrupts(const int usecs) {
   //                      =     .0001s      /   6.25e-8 s  * 8
   //                      =   200
   const float targetSecs = ((float)usecs) / 1e6;
-  const float timerSteps = 6.25e-8; //    1/16MHz
+  const float timerSteps = 6.25e-8;  //    1/16MHz
   int count = 0;
-  int prescale = 1; // valid values: 1, 8, 64, 256, 1024
+  int prescale = 1;  // valid values: 1, 8, 64, 256, 1024
   do {
     count = targetSecs / (timerSteps * prescale);
-    if (count < 65535) // Timer 1 is 16-bits wide
+    if (count < 65535)  // Timer 1 is 16-bits wide
       break;
     prescale *= 8;
   } while (prescale <= 1024);
-  if (prescale > 1024) // time too long
+  if (prescale > 1024)  // time too long
     return false;
-  if (prescale == 1 && count < 100) // time too short
+  if (prescale == 1 && count < 100)  // time too short
     return false;
 
-  OCR1A = count; // Eg, 200 = 0.1ms - I found 1ms gives rough acceleration
+  OCR1A = count;  // Eg, 200 = 0.1ms - I found 1ms gives rough acceleration
   // turn on CTC mode (Clear Timer on Compare Match):
   TCCR1B |= (1 << WGM12);
   // Set CS10 and CS12 bits for 1024 prescaler:
@@ -636,21 +648,21 @@ bool SetUpInterrupts(const int usecs) {
   //   1      1      0   external clock on T1 pin, falling edge
   //   1      1      1   external clock on T1 pin, rising edge
   switch (prescale) {
-  case 1:
-    TCCR1B |= (1 << CS10); // 0 0 1
-    break;
-  case 8:
-    TCCR1B |= (1 << CS11); // 0 1 0
-    break;
-  case 64:
-    TCCR1B |= (1 << CS11) & (1 << CS10); // 0 1 1
-    break;
-  case 256:
-    TCCR1B |= (1 << CS12); // 1 0 0
-    break;
-  case 1024:
-    TCCR1B |= (1 << CS12) & (1 << CS10); // 1 0 1
-    break;
+    case 1:
+      TCCR1B |= (1 << CS10);  // 0 0 1
+      break;
+    case 8:
+      TCCR1B |= (1 << CS11);  // 0 1 0
+      break;
+    case 64:
+      TCCR1B |= (1 << CS11) & (1 << CS10);  // 0 1 1
+      break;
+    case 256:
+      TCCR1B |= (1 << CS12);  // 1 0 0
+      break;
+    case 1024:
+      TCCR1B |= (1 << CS12) & (1 << CS10);  // 1 0 1
+      break;
   }
   // enable timer compare interrupt:
   TIMSK1 |= (1 << OCIE1A);
@@ -665,24 +677,21 @@ void printDouble(double val, uint8_t precision) {
   // precision is a number from 0 to 6 indicating the desired decimial places
   // example: printDouble( 3.1415, 2); // prints 3.14 (two decimal places)
 
-  Serial.print(int(val)); // prints the int part
+  Serial.print(int(val));  // prints the int part
   if (precision > 0) {
-    Serial.print("."); // print the decimal point
+    Serial.print(".");  // print the decimal point
     unsigned long frac;
     unsigned long mult = 1;
     uint8_t padding = precision - 1;
-    while (precision--)
-      mult *= 10;
+    while (precision--) mult *= 10;
 
     if (val >= 0)
       frac = (val - int(val)) * mult;
     else
       frac = (int(val) - val) * mult;
     unsigned long frac1 = frac;
-    while (frac1 /= 10)
-      padding--;
-    while (padding--)
-      Serial.print("0");
+    while (frac1 /= 10) padding--;
+    while (padding--) Serial.print("0");
     Serial.print(frac, DEC);
   }
 }
