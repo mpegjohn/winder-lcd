@@ -583,7 +583,7 @@ float calculateSpoolSpeed() {
   //  And scale the pot's value from min to max speeds
   float spoolSpeed =
       ((analog_value / 1023.0) * (MAX_SPEED - MIN_SPEED)) + MIN_SPEED;
-  return MAX_SPEED;
+  //return MAX_SPEED;
   return spoolSpeed;
 }
 
