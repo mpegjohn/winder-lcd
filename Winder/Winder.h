@@ -60,6 +60,8 @@ uint8_t motor_status = 0x03; // both motors on
 uint8_t direction = 0;
 volatile uint8_t running = 0; // The flag that controlls the motor updates
 uint8_t at_tap = 0; // 0 not at a tap, 1 = at a tap, waiting for the go again
+uint8_t end_of_layer = 0;
+uint8_t stop_after_layer = 0;
 
 enum modes {
   idleMode,

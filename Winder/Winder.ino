@@ -95,6 +95,7 @@ void loop() {
           direction = 0;
           running = 0;
           at_tap = 0;
+          stop_after_layer = 0;
           this_layer = 0;
           current_layer_turns.value = 0;
           current_turns.value = 0;
@@ -145,6 +146,8 @@ void loop() {
           if (num_taps < NUMTAPS) {
             taps[num_taps++] = tap;
           }
+        } else if (strcmp(identifier, "PL") == 0) { // Pause after layer
+          stop_after_layer = 1;
         }
       } while (strcmp(identifier, "DN") != 0);
       current_mode = parameterMode;
@@ -202,6 +205,7 @@ void loop() {
     // Do all the whole layers
     for (layer_count = 0; layer_count < num_layers; layer_count++) {
       this_layer++;
+      end_of_layer = 0;
 
       layer_taps taps_in_layer = get_taps_in_layer(turns_per_layer.value);
 
@@ -218,6 +222,12 @@ void loop() {
 
       // Change direction of shuttle
       direction = direction ^ 1;
+
+      // Done a layer check if stop_afer_layer is set
+      end_of_layer = 1;
+      if(stop_after_layer) {
+        wait_for_tap();
+      }
     }
 
     // do the last layer
@@ -410,8 +420,9 @@ void send_status_serial() {
   //[1 byte] direction 1 = L to R, 0 = R to L
   //[1 byte] running 1 = running, 0 - stopped
   //[1 byte] at tap.
+  //[1 byte] end_of_layer.
 
-  uint8_t status_data[16];
+  uint8_t status_data[17];
 
   uint8_t *status_data_pointer;
   status_data_pointer = status_data;
@@ -425,8 +436,9 @@ void send_status_serial() {
   status_data[13] = direction;
   status_data[14] = running;
   status_data[15] = at_tap;
+  status_data[16] = end_of_layer;
 
-  Serial.write(status_data, 16);
+  Serial.write(status_data, 17);
 }
 
 void requestEvent() {
